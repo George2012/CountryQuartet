@@ -1,0 +1,17 @@
+# Normalise text files in the repository, check out with native line endings.
+* text=auto
+
+# Must keep LF: executed by sh on Unix/CI.
+gradlew text eol=lf
+
+# Windows-only script.
+gradlew.bat text eol=crlf
+
+# Binary.
+*.jar binary
+*.png binary
+*.webp binary
+*.aab binary
+*.apk binary
+*.jks binary
+*.keystore binary
