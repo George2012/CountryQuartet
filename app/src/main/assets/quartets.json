@@ -1,0 +1,67 @@
+[
+  {
+    "id": "nordic_countries",
+    "name": "Nordic Countries",
+    "countryIds": ["se", "no", "dk", "fi"]
+  },
+  {
+    "id": "southern_europe",
+    "name": "Southern Europe",
+    "countryIds": ["it", "es", "pt", "gr"]
+  },
+  {
+    "id": "central_europe",
+    "name": "Central Europe",
+    "countryIds": ["de", "at", "ch", "cz"]
+  },
+  {
+    "id": "eastern_europe",
+    "name": "Eastern Europe",
+    "countryIds": ["pl", "ua", "ro", "hu"]
+  },
+  {
+    "id": "middle_east",
+    "name": "Middle East",
+    "countryIds": ["il", "jo", "lb", "sa"]
+  },
+  {
+    "id": "east_asia",
+    "name": "East Asia",
+    "countryIds": ["jp", "kr", "cn", "mn"]
+  },
+  {
+    "id": "south_asia",
+    "name": "South Asia",
+    "countryIds": ["in", "pk", "bd", "lk"]
+  },
+  {
+    "id": "southeast_asia",
+    "name": "Southeast Asia",
+    "countryIds": ["th", "vn", "my", "id"]
+  },
+  {
+    "id": "north_africa",
+    "name": "North Africa",
+    "countryIds": ["eg", "ma", "dz", "tn"]
+  },
+  {
+    "id": "east_africa",
+    "name": "East Africa",
+    "countryIds": ["ke", "tz", "et", "ug"]
+  },
+  {
+    "id": "north_america",
+    "name": "North America",
+    "countryIds": ["us", "ca", "mx", "cu"]
+  },
+  {
+    "id": "south_america",
+    "name": "South America",
+    "countryIds": ["br", "ar", "cl", "pe"]
+  },
+  {
+    "id": "oceania",
+    "name": "Oceania",
+    "countryIds": ["au", "nz", "pg", "fj"]
+  }
+]

@@ -20,7 +20,7 @@
 
     <!-- Phase 1 placeholders -->
     <string name="placeholder_game">The game board arrives in Phase 5.</string>
-    <string name="placeholder_countries">All 13 quartets and 52 countries arrive in Phase 2.</string>
+    <string name="placeholder_countries">Browsing all 13 quartets and 52 countries arrives in a later phase.</string>
     <string name="placeholder_how_to_play">The illustrated rules arrive in Phase 5.</string>
     <string name="placeholder_settings">Sound, animation and statistics arrive in Phase 9.</string>
 </resources>

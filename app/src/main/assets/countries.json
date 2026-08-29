@@ -1,0 +1,522 @@
+[
+  {
+    "id": "se",
+    "name": "Sweden",
+    "quartetId": "nordic_countries",
+    "capital": "Stockholm",
+    "language": "Swedish",
+    "currency": "Swedish krona",
+    "flagAsset": "flags/se.png",
+    "funFact": "Sweden has around 267,000 islands, more than any other country."
+  },
+  {
+    "id": "no",
+    "name": "Norway",
+    "quartetId": "nordic_countries",
+    "capital": "Oslo",
+    "language": "Norwegian",
+    "currency": "Norwegian krone",
+    "flagAsset": "flags/no.png",
+    "funFact": "Norway's long coastline is lined with fjords carved by ancient glaciers."
+  },
+  {
+    "id": "dk",
+    "name": "Denmark",
+    "quartetId": "nordic_countries",
+    "capital": "Copenhagen",
+    "language": "Danish",
+    "currency": "Danish krone",
+    "flagAsset": "flags/dk.png",
+    "funFact": "The plastic LEGO brick we know today was patented in Denmark in 1958."
+  },
+  {
+    "id": "fi",
+    "name": "Finland",
+    "quartetId": "nordic_countries",
+    "capital": "Helsinki",
+    "language": "Finnish",
+    "currency": "Euro",
+    "flagAsset": "flags/fi.png",
+    "funFact": "Finland is called the Land of a Thousand Lakes, but it actually has about 188,000."
+  },
+  {
+    "id": "it",
+    "name": "Italy",
+    "quartetId": "southern_europe",
+    "capital": "Rome",
+    "language": "Italian",
+    "currency": "Euro",
+    "flagAsset": "flags/it.png",
+    "funFact": "The Colosseum in Rome could hold about 50,000 spectators almost 2,000 years ago."
+  },
+  {
+    "id": "es",
+    "name": "Spain",
+    "quartetId": "southern_europe",
+    "capital": "Madrid",
+    "language": "Spanish",
+    "currency": "Euro",
+    "flagAsset": "flags/es.png",
+    "funFact": "Spain produces more olive oil than any other country in the world."
+  },
+  {
+    "id": "pt",
+    "name": "Portugal",
+    "quartetId": "southern_europe",
+    "capital": "Lisbon",
+    "language": "Portuguese",
+    "currency": "Euro",
+    "flagAsset": "flags/pt.png",
+    "funFact": "About half of all the cork in the world comes from Portuguese cork oak trees."
+  },
+  {
+    "id": "gr",
+    "name": "Greece",
+    "quartetId": "southern_europe",
+    "capital": "Athens",
+    "language": "Greek",
+    "currency": "Euro",
+    "flagAsset": "flags/gr.png",
+    "funFact": "The ancient Olympic Games began in Olympia, Greece, in 776 BC."
+  },
+  {
+    "id": "de",
+    "name": "Germany",
+    "quartetId": "central_europe",
+    "capital": "Berlin",
+    "language": "German",
+    "currency": "Euro",
+    "flagAsset": "flags/de.png",
+    "funFact": "Germany has more than 20,000 castles, some over a thousand years old."
+  },
+  {
+    "id": "at",
+    "name": "Austria",
+    "quartetId": "central_europe",
+    "capital": "Vienna",
+    "language": "German",
+    "currency": "Euro",
+    "flagAsset": "flags/at.png",
+    "funFact": "Vienna's Schoenbrunn Zoo opened in 1752 and is the oldest zoo in the world."
+  },
+  {
+    "id": "ch",
+    "name": "Switzerland",
+    "quartetId": "central_europe",
+    "capital": "Bern",
+    "language": "German",
+    "currency": "Swiss franc",
+    "flagAsset": "flags/ch.png",
+    "funFact": "Switzerland has four official languages: German, French, Italian and Romansh."
+  },
+  {
+    "id": "cz",
+    "name": "Czechia",
+    "quartetId": "central_europe",
+    "capital": "Prague",
+    "language": "Czech",
+    "currency": "Czech koruna",
+    "flagAsset": "flags/cz.png",
+    "funFact": "Prague Castle is the largest ancient castle complex in the world."
+  },
+  {
+    "id": "pl",
+    "name": "Poland",
+    "quartetId": "eastern_europe",
+    "capital": "Warsaw",
+    "language": "Polish",
+    "currency": "Polish zloty",
+    "flagAsset": "flags/pl.png",
+    "funFact": "The Wieliczka Salt Mine has whole chapels carved out of solid salt."
+  },
+  {
+    "id": "ua",
+    "name": "Ukraine",
+    "quartetId": "eastern_europe",
+    "capital": "Kyiv",
+    "language": "Ukrainian",
+    "currency": "Ukrainian hryvnia",
+    "flagAsset": "flags/ua.png",
+    "funFact": "Ukraine's rich black soil makes it one of the world's biggest grain growers."
+  },
+  {
+    "id": "ro",
+    "name": "Romania",
+    "quartetId": "eastern_europe",
+    "capital": "Bucharest",
+    "language": "Romanian",
+    "currency": "Romanian leu",
+    "flagAsset": "flags/ro.png",
+    "funFact": "Romania's Carpathian Mountains hold one of Europe's largest brown bear populations."
+  },
+  {
+    "id": "hu",
+    "name": "Hungary",
+    "quartetId": "eastern_europe",
+    "capital": "Budapest",
+    "language": "Hungarian",
+    "currency": "Hungarian forint",
+    "flagAsset": "flags/hu.png",
+    "funFact": "Budapest is built above more than a hundred natural hot springs."
+  },
+  {
+    "id": "il",
+    "name": "Israel",
+    "quartetId": "middle_east",
+    "capital": "Jerusalem",
+    "language": "Hebrew",
+    "currency": "Israeli new shekel",
+    "flagAsset": "flags/il.png",
+    "funFact": "The shore of the Dead Sea is the lowest place on Earth's land surface."
+  },
+  {
+    "id": "jo",
+    "name": "Jordan",
+    "quartetId": "middle_east",
+    "capital": "Amman",
+    "language": "Arabic",
+    "currency": "Jordanian dinar",
+    "flagAsset": "flags/jo.png",
+    "funFact": "The city of Petra was carved into rose-red cliffs more than 2,000 years ago."
+  },
+  {
+    "id": "lb",
+    "name": "Lebanon",
+    "quartetId": "middle_east",
+    "capital": "Beirut",
+    "language": "Arabic",
+    "currency": "Lebanese pound",
+    "flagAsset": "flags/lb.png",
+    "funFact": "The cedar tree on Lebanon's flag has been a national symbol for thousands of years."
+  },
+  {
+    "id": "sa",
+    "name": "Saudi Arabia",
+    "quartetId": "middle_east",
+    "capital": "Riyadh",
+    "language": "Arabic",
+    "currency": "Saudi riyal",
+    "flagAsset": "flags/sa.png",
+    "funFact": "Saudi Arabia is one of the few countries with no permanent rivers at all."
+  },
+  {
+    "id": "jp",
+    "name": "Japan",
+    "quartetId": "east_asia",
+    "capital": "Tokyo",
+    "language": "Japanese",
+    "currency": "Japanese yen",
+    "flagAsset": "flags/jp.png",
+    "funFact": "Japan is made up of more than 14,000 islands."
+  },
+  {
+    "id": "kr",
+    "name": "South Korea",
+    "quartetId": "east_asia",
+    "capital": "Seoul",
+    "language": "Korean",
+    "currency": "South Korean won",
+    "flagAsset": "flags/kr.png",
+    "funFact": "Korean is written in Hangul, an alphabet created in 1443 to be easy to learn."
+  },
+  {
+    "id": "cn",
+    "name": "China",
+    "quartetId": "east_asia",
+    "capital": "Beijing",
+    "language": "Mandarin Chinese",
+    "currency": "Chinese yuan",
+    "flagAsset": "flags/cn.png",
+    "funFact": "The Great Wall of China was built and rebuilt over more than 2,000 years."
+  },
+  {
+    "id": "mn",
+    "name": "Mongolia",
+    "quartetId": "east_asia",
+    "capital": "Ulaanbaatar",
+    "language": "Mongolian",
+    "currency": "Mongolian tugrik",
+    "flagAsset": "flags/mn.png",
+    "funFact": "Ulaanbaatar is the coldest capital city in the world."
+  },
+  {
+    "id": "in",
+    "name": "India",
+    "quartetId": "south_asia",
+    "capital": "New Delhi",
+    "language": "Hindi",
+    "currency": "Indian rupee",
+    "flagAsset": "flags/in.png",
+    "funFact": "India's constitution recognises 22 official languages."
+  },
+  {
+    "id": "pk",
+    "name": "Pakistan",
+    "quartetId": "south_asia",
+    "capital": "Islamabad",
+    "language": "Urdu",
+    "currency": "Pakistani rupee",
+    "flagAsset": "flags/pk.png",
+    "funFact": "K2, the second-highest mountain on Earth, stands on Pakistan's northern border."
+  },
+  {
+    "id": "bd",
+    "name": "Bangladesh",
+    "quartetId": "south_asia",
+    "capital": "Dhaka",
+    "language": "Bengali",
+    "currency": "Bangladeshi taka",
+    "flagAsset": "flags/bd.png",
+    "funFact": "The Sundarbans in Bangladesh is the largest mangrove forest in the world."
+  },
+  {
+    "id": "lk",
+    "name": "Sri Lanka",
+    "quartetId": "south_asia",
+    "capital": "Sri Jayawardenepura Kotte",
+    "language": "Sinhala",
+    "currency": "Sri Lankan rupee",
+    "flagAsset": "flags/lk.png",
+    "funFact": "Sri Lanka is one of the world's largest tea exporters, famous for Ceylon tea."
+  },
+  {
+    "id": "th",
+    "name": "Thailand",
+    "quartetId": "southeast_asia",
+    "capital": "Bangkok",
+    "language": "Thai",
+    "currency": "Thai baht",
+    "flagAsset": "flags/th.png",
+    "funFact": "Bangkok's full ceremonial name is the longest place name in the world."
+  },
+  {
+    "id": "vn",
+    "name": "Vietnam",
+    "quartetId": "southeast_asia",
+    "capital": "Hanoi",
+    "language": "Vietnamese",
+    "currency": "Vietnamese dong",
+    "flagAsset": "flags/vn.png",
+    "funFact": "Ha Long Bay is dotted with nearly 2,000 limestone islands."
+  },
+  {
+    "id": "my",
+    "name": "Malaysia",
+    "quartetId": "southeast_asia",
+    "capital": "Kuala Lumpur",
+    "language": "Malay",
+    "currency": "Malaysian ringgit",
+    "flagAsset": "flags/my.png",
+    "funFact": "The Petronas Towers were the tallest buildings in the world from 1998 to 2004."
+  },
+  {
+    "id": "id",
+    "name": "Indonesia",
+    "quartetId": "southeast_asia",
+    "capital": "Jakarta",
+    "language": "Indonesian",
+    "currency": "Indonesian rupiah",
+    "flagAsset": "flags/id.png",
+    "funFact": "Indonesia is spread across more than 17,000 islands."
+  },
+  {
+    "id": "eg",
+    "name": "Egypt",
+    "quartetId": "north_africa",
+    "capital": "Cairo",
+    "language": "Arabic",
+    "currency": "Egyptian pound",
+    "flagAsset": "flags/eg.png",
+    "funFact": "The Great Pyramid of Giza is about 4,500 years old."
+  },
+  {
+    "id": "ma",
+    "name": "Morocco",
+    "quartetId": "north_africa",
+    "capital": "Rabat",
+    "language": "Arabic",
+    "currency": "Moroccan dirham",
+    "flagAsset": "flags/ma.png",
+    "funFact": "Morocco's Atlas Mountains get enough snow in winter for skiing."
+  },
+  {
+    "id": "dz",
+    "name": "Algeria",
+    "quartetId": "north_africa",
+    "capital": "Algiers",
+    "language": "Arabic",
+    "currency": "Algerian dinar",
+    "flagAsset": "flags/dz.png",
+    "funFact": "Algeria is the largest country in Africa, and most of it is desert."
+  },
+  {
+    "id": "tn",
+    "name": "Tunisia",
+    "quartetId": "north_africa",
+    "capital": "Tunis",
+    "language": "Arabic",
+    "currency": "Tunisian dinar",
+    "flagAsset": "flags/tn.png",
+    "funFact": "Desert scenes for the Star Wars films were shot in southern Tunisia."
+  },
+  {
+    "id": "ke",
+    "name": "Kenya",
+    "quartetId": "east_africa",
+    "capital": "Nairobi",
+    "language": "Swahili",
+    "currency": "Kenyan shilling",
+    "flagAsset": "flags/ke.png",
+    "funFact": "Nairobi National Park, home to wild lions and giraffes, borders the capital city."
+  },
+  {
+    "id": "tz",
+    "name": "Tanzania",
+    "quartetId": "east_africa",
+    "capital": "Dodoma",
+    "language": "Swahili",
+    "currency": "Tanzanian shilling",
+    "flagAsset": "flags/tz.png",
+    "funFact": "Mount Kilimanjaro, the highest mountain in Africa, rises in northern Tanzania."
+  },
+  {
+    "id": "et",
+    "name": "Ethiopia",
+    "quartetId": "east_africa",
+    "capital": "Addis Ababa",
+    "language": "Amharic",
+    "currency": "Ethiopian birr",
+    "flagAsset": "flags/et.png",
+    "funFact": "Ethiopia follows its own calendar, which has 13 months."
+  },
+  {
+    "id": "ug",
+    "name": "Uganda",
+    "quartetId": "east_africa",
+    "capital": "Kampala",
+    "language": "English",
+    "currency": "Ugandan shilling",
+    "flagAsset": "flags/ug.png",
+    "funFact": "About half of all the mountain gorillas left on Earth live in Uganda."
+  },
+  {
+    "id": "us",
+    "name": "United States",
+    "quartetId": "north_america",
+    "capital": "Washington, D.C.",
+    "language": "English",
+    "currency": "US dollar",
+    "flagAsset": "flags/us.png",
+    "funFact": "Alaska, the largest US state, is more than twice the size of Texas."
+  },
+  {
+    "id": "ca",
+    "name": "Canada",
+    "quartetId": "north_america",
+    "capital": "Ottawa",
+    "language": "English and French",
+    "currency": "Canadian dollar",
+    "flagAsset": "flags/ca.png",
+    "funFact": "Canada has more lakes than all the other countries in the world combined."
+  },
+  {
+    "id": "mx",
+    "name": "Mexico",
+    "quartetId": "north_america",
+    "capital": "Mexico City",
+    "language": "Spanish",
+    "currency": "Mexican peso",
+    "flagAsset": "flags/mx.png",
+    "funFact": "Chocolate was first made from cacao beans in ancient Mexico."
+  },
+  {
+    "id": "cu",
+    "name": "Cuba",
+    "quartetId": "north_america",
+    "capital": "Havana",
+    "language": "Spanish",
+    "currency": "Cuban peso",
+    "flagAsset": "flags/cu.png",
+    "funFact": "Cuba is the largest island in the Caribbean Sea."
+  },
+  {
+    "id": "br",
+    "name": "Brazil",
+    "quartetId": "south_america",
+    "capital": "Brasilia",
+    "language": "Portuguese",
+    "currency": "Brazilian real",
+    "flagAsset": "flags/br.png",
+    "funFact": "Most of the Amazon rainforest lies inside Brazil."
+  },
+  {
+    "id": "ar",
+    "name": "Argentina",
+    "quartetId": "south_america",
+    "capital": "Buenos Aires",
+    "language": "Spanish",
+    "currency": "Argentine peso",
+    "flagAsset": "flags/ar.png",
+    "funFact": "Aconcagua in Argentina is the highest mountain outside Asia."
+  },
+  {
+    "id": "cl",
+    "name": "Chile",
+    "quartetId": "south_america",
+    "capital": "Santiago",
+    "language": "Spanish",
+    "currency": "Chilean peso",
+    "flagAsset": "flags/cl.png",
+    "funFact": "Chile's Atacama Desert is the driest place on Earth."
+  },
+  {
+    "id": "pe",
+    "name": "Peru",
+    "quartetId": "south_america",
+    "capital": "Lima",
+    "language": "Spanish",
+    "currency": "Peruvian sol",
+    "flagAsset": "flags/pe.png",
+    "funFact": "The Inca city of Machu Picchu sits high in the Andes mountains."
+  },
+  {
+    "id": "au",
+    "name": "Australia",
+    "quartetId": "oceania",
+    "capital": "Canberra",
+    "language": "English",
+    "currency": "Australian dollar",
+    "flagAsset": "flags/au.png",
+    "funFact": "The Great Barrier Reef is the largest coral reef system on Earth."
+  },
+  {
+    "id": "nz",
+    "name": "New Zealand",
+    "quartetId": "oceania",
+    "capital": "Wellington",
+    "language": "English",
+    "currency": "New Zealand dollar",
+    "flagAsset": "flags/nz.png",
+    "funFact": "New Zealand has several times more sheep than people."
+  },
+  {
+    "id": "pg",
+    "name": "Papua New Guinea",
+    "quartetId": "oceania",
+    "capital": "Port Moresby",
+    "language": "Tok Pisin",
+    "currency": "Papua New Guinean kina",
+    "flagAsset": "flags/pg.png",
+    "funFact": "More than 800 languages are spoken in Papua New Guinea, more than anywhere else."
+  },
+  {
+    "id": "fj",
+    "name": "Fiji",
+    "quartetId": "oceania",
+    "capital": "Suva",
+    "language": "Fijian",
+    "currency": "Fijian dollar",
+    "flagAsset": "flags/fj.png",
+    "funFact": "Fiji is made up of more than 300 islands."
+  }
+]

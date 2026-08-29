@@ -32,6 +32,15 @@ android {
         compose = true
     }
 
+    sourceSets {
+        // Put the shipped JSON assets on the unit test classpath. The dataset
+        // tests then check exactly the content that goes into the APK, and
+        // Gradle re-runs them whenever that content changes.
+        getByName("test") {
+            resources.srcDir("src/main/assets")
+        }
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
@@ -54,4 +63,5 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.tooling)
 
     testImplementation(libs.junit)
+    testImplementation(libs.json)
 }
