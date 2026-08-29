@@ -107,7 +107,11 @@ class GameUiStateMapperTest {
             completed = listOf(listOf("east_asia"), emptyList(), emptyList(), emptyList()),
         )
 
-        assertEquals(listOf("East Asia"), map(state).humanCompletedQuartets.map { it.name })
+        assertEquals(listOf("East Asia"), map(state).humanCompletedQuartets.map { it.quartet.name })
+        assertEquals(
+            listOf("Japan", "South Korea", "China", "Mongolia"),
+            map(state).humanCompletedQuartets.single().countries.map { it.name },
+        )
         assertEquals(1, map(state).completedQuartetsCount)
         assertEquals(13, map(state).totalQuartets)
     }

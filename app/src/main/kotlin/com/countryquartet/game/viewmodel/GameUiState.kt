@@ -32,7 +32,9 @@ data class PlayerStanding(
  * What just happened, as data rather than text.
  *
  * The screen turns these into localizable strings, so no user-facing wording
- * lives in the ViewModel.
+ * lives in the ViewModel. The "is human" flags let it pick a sentence that
+ * reads correctly for the player being addressed ("You do not have Lebanon"
+ * rather than "You does not have Lebanon").
  */
 sealed interface GameMessage {
 
@@ -40,12 +42,15 @@ sealed interface GameMessage {
         val askerName: String,
         val targetName: String,
         val countryName: String,
+        val askerIsHuman: Boolean,
+        val targetIsHuman: Boolean,
     ) : GameMessage
 
     data class CardRefused(
         val askerName: String,
         val targetName: String,
         val countryName: String,
+        val targetIsHuman: Boolean,
     ) : GameMessage
 
     data class QuartetCompleted(
@@ -65,7 +70,7 @@ sealed interface GameUiState {
 
     data class Playing(
         val hand: List<QuartetGroup>,
-        val humanCompletedQuartets: List<Quartet>,
+        val humanCompletedQuartets: List<QuartetEntry>,
         val standings: List<PlayerStanding>,
         val completedQuartetsCount: Int,
         val totalQuartets: Int,

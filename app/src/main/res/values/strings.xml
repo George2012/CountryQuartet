@@ -19,7 +19,6 @@
     <string name="action_back">Back</string>
 
     <!-- Phase 1 placeholders -->
-    <string name="placeholder_countries">Browsing all 13 quartets and 52 countries arrives in a later phase.</string>
     <string name="placeholder_how_to_play">The illustrated rules arrive in Phase 5.</string>
     <string name="placeholder_settings">Sound, animation and statistics arrive in Phase 9.</string>
     <!-- Game screen -->
@@ -34,7 +33,10 @@
     <string name="game_ask">ASK</string>
     <string name="game_cards_left">%1$d cards</string>
     <string name="game_msg_received">%1$s got %3$s from %2$s.</string>
-    <string name="game_msg_refused">%2$s does not have %3$s. Turn over!</string>
+    <string name="game_msg_received_by_you">You got %2$s from %1$s.</string>
+    <string name="game_msg_received_from_you">%1$s took %2$s from you.</string>
+    <string name="game_msg_refused">%1$s does not have %2$s. Turn over!</string>
+    <string name="game_msg_refused_by_you">You do not have %1$s. Turn over!</string>
     <string name="game_msg_quartet">QUARTET COMPLETED! %1$s collected %2$s.</string>
     <string name="game_over">GAME OVER</string>
     <string name="game_winner">%1$s wins!</string>
@@ -46,4 +48,14 @@
 
 %1$s</string>
     <string name="game_score_line">%1$s: %2$d</string>
+
+    <!-- Country cards -->
+    <string name="card_capital">Capital:</string>
+    <string name="card_language">Language:</string>
+    <string name="card_currency">Currency:</string>
+    <string name="card_collect_all_four">COLLECT ALL 4</string>
+    <string name="card_completed_badge">COMPLETE</string>
+
+    <!-- Countries screen -->
+    <string name="countries_intro">All 13 quartets and 52 countries. Tap a country to see its card.</string>
 </resources>

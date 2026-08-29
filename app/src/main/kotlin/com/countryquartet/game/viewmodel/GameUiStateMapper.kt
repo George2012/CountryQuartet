@@ -41,7 +41,12 @@ internal fun playingState(
 
     return GameUiState.Playing(
         hand = hand,
-        humanCompletedQuartets = human.completedQuartets.map(gameData::quartet),
+        humanCompletedQuartets = human.completedQuartets.map { quartetId ->
+            QuartetEntry(
+                quartet = gameData.quartet(quartetId),
+                countries = gameData.countriesOf(quartetId),
+            )
+        },
         standings = game.players.mapIndexed { index, player ->
             PlayerStanding(
                 id = player.id,

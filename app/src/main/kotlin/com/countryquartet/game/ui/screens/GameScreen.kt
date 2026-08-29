@@ -3,6 +3,8 @@ package com.countryquartet.game.ui.screens
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -30,6 +32,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.countryquartet.game.R
+import com.countryquartet.game.ui.components.CardState
+import com.countryquartet.game.ui.components.CompactCountryCard
+import com.countryquartet.game.ui.components.CompletedQuartetCard
 import com.countryquartet.game.ui.components.ScreenScaffold
 import com.countryquartet.game.ui.theme.CountryQuartetTheme
 import com.countryquartet.game.viewmodel.GameMessage
@@ -195,18 +200,31 @@ private fun StatusLine(state: GameUiState.Playing) {
 
 @Composable
 private fun messageText(message: GameMessage): String = when (message) {
-    is GameMessage.CardReceived -> stringResource(
-        R.string.game_msg_received,
-        message.askerName,
-        message.targetName,
-        message.countryName,
-    )
-    is GameMessage.CardRefused -> stringResource(
-        R.string.game_msg_refused,
-        message.askerName,
-        message.targetName,
-        message.countryName,
-    )
+    // Separate sentences per point of view: the human player is called "You",
+    // which does not fit a third person verb.
+    is GameMessage.CardReceived -> when {
+        message.askerIsHuman -> stringResource(
+            R.string.game_msg_received_by_you,
+            message.targetName,
+            message.countryName,
+        )
+        message.targetIsHuman -> stringResource(
+            R.string.game_msg_received_from_you,
+            message.askerName,
+            message.countryName,
+        )
+        else -> stringResource(
+            R.string.game_msg_received,
+            message.askerName,
+            message.targetName,
+            message.countryName,
+        )
+    }
+    is GameMessage.CardRefused -> if (message.targetIsHuman) {
+        stringResource(R.string.game_msg_refused_by_you, message.countryName)
+    } else {
+        stringResource(R.string.game_msg_refused, message.targetName, message.countryName)
+    }
     is GameMessage.QuartetCompleted -> stringResource(
         R.string.game_msg_quartet,
         message.playerName,
@@ -249,23 +267,14 @@ private fun HandList(
                     modifier = Modifier.padding(top = 8.dp),
                 )
             }
-            items(state.humanCompletedQuartets, key = { "done_${it.id}" }) { quartet ->
-                Card(
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                    ),
-                ) {
-                    Text(
-                        text = quartet.name,
-                        style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.padding(10.dp),
-                    )
-                }
+            items(state.humanCompletedQuartets, key = { "done_${it.quartet.id}" }) { entry ->
+                CompletedQuartetCard(quartet = entry.quartet, countries = entry.countries)
             }
         }
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun QuartetGroupCard(
     group: QuartetGroup,
@@ -294,22 +303,39 @@ private fun QuartetGroupCard(
                 text = "${group.quartet.name}  ${group.owned.size}/4",
                 style = MaterialTheme.typography.titleSmall,
             )
-            Text(
-                text = group.owned.joinToString { it.name },
-                style = MaterialTheme.typography.bodyMedium,
-            )
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                group.owned.forEach { country ->
+                    CompactCountryCard(
+                        countryId = country.id,
+                        name = country.name,
+                        capital = country.capital,
+                        state = CardState.Owned,
+                    )
+                }
+            }
             if (isSelected) {
                 Text(
                     text = stringResource(R.string.game_hint_pick_country),
                     style = MaterialTheme.typography.labelSmall,
                 )
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
                     group.missing.forEach { country ->
-                        FilterChip(
-                            selected = country.id == selectedCountryId,
+                        CompactCountryCard(
+                            countryId = country.id,
+                            name = country.name,
+                            capital = null,
+                            state = when {
+                                !enabled -> CardState.Disabled
+                                country.id == selectedCountryId -> CardState.Selected
+                                else -> CardState.Normal
+                            },
                             onClick = { onCountryClick(country.id) },
-                            enabled = enabled,
-                            label = { Text(country.name, style = MaterialTheme.typography.labelSmall) },
                         )
                     }
                 }

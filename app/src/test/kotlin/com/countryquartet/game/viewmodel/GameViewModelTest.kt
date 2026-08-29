@@ -150,6 +150,54 @@ class GameViewModelTest {
     }
 
     @Test
+    fun `messages record who asked and who was asked`() = runTest {
+        val viewModel = newViewModel(seed = 4)
+        advanceUntilIdle()
+        val humanName = viewModel.playing.human.name
+        val seen = mutableListOf<GameMessage>()
+
+        var moves = 0
+        while (!viewModel.playing.isFinished && moves++ < 500) {
+            val state = viewModel.playing
+            val group = state.hand.first()
+            if (state.selection.quartetId != group.quartet.id) {
+                viewModel.selectQuartet(group.quartet.id)
+            }
+            viewModel.selectCountry(viewModel.playing.selectedGroup!!.missing.first().id)
+            // Rotate through the opponents; always asking the same one can go a
+            // whole game without a single hit.
+            viewModel.selectOpponent(state.opponents[moves % state.opponents.size].id)
+
+            viewModel.ask()
+            // Sampled before the computer turns run, so this is the human move.
+            // A StateFlow conflates, so collecting it would drop messages.
+            viewModel.playing.message?.let { seen += it }
+
+            advanceUntilIdle()
+            viewModel.playing.message?.let { seen += it }
+        }
+
+        // The flags must always agree with the names, otherwise the screen
+        // would pick a sentence written for the wrong player.
+        seen.filterIsInstance<GameMessage.CardRefused>().forEach { message ->
+            assertEquals(message.toString(), message.targetIsHuman, message.targetName == humanName)
+        }
+        seen.filterIsInstance<GameMessage.CardReceived>().forEach { message ->
+            assertEquals(message.toString(), message.askerIsHuman, message.askerName == humanName)
+            assertEquals(message.toString(), message.targetIsHuman, message.targetName == humanName)
+        }
+        // Both points of view have to occur, or the assertions above prove nothing.
+        assertTrue(
+            "no computer player ever asked the human",
+            seen.filterIsInstance<GameMessage.CardRefused>().any { it.targetIsHuman },
+        )
+        assertTrue(
+            "the human never received a card",
+            seen.filterIsInstance<GameMessage.CardReceived>().any { it.askerIsHuman },
+        )
+    }
+
+    @Test
     fun `play again deals a fresh game`() = runTest {
         val viewModel = newViewModel()
         advanceUntilIdle()

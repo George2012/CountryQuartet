@@ -145,14 +145,25 @@ class GameViewModel(
 
     /** Describes an outcome using the names known before the move was applied. */
     private fun describe(before: GameState, outcome: RequestOutcome): GameMessage {
-        val asker = before.player(outcome.askingPlayerId).name
-        val target = before.player(outcome.targetPlayerId).name
+        val askingPlayer = before.player(outcome.askingPlayerId)
+        val targetPlayer = before.player(outcome.targetPlayerId)
         val country = gameData.country(outcome.countryId).name
         return when (outcome) {
-            is RequestOutcome.Failure -> GameMessage.CardRefused(asker, target, country)
+            is RequestOutcome.Failure -> GameMessage.CardRefused(
+                askerName = askingPlayer.name,
+                targetName = targetPlayer.name,
+                countryName = country,
+                targetIsHuman = targetPlayer.isHuman,
+            )
             is RequestOutcome.Success -> outcome.completedQuartetId?.let { quartetId ->
-                GameMessage.QuartetCompleted(asker, gameData.quartet(quartetId).name)
-            } ?: GameMessage.CardReceived(asker, target, country)
+                GameMessage.QuartetCompleted(askingPlayer.name, gameData.quartet(quartetId).name)
+            } ?: GameMessage.CardReceived(
+                askerName = askingPlayer.name,
+                targetName = targetPlayer.name,
+                countryName = country,
+                askerIsHuman = askingPlayer.isHuman,
+                targetIsHuman = targetPlayer.isHuman,
+            )
         }
     }
 
