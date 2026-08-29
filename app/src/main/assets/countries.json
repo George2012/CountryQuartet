@@ -97,7 +97,7 @@
     "language": "German",
     "currency": "Euro",
     "flagAsset": "flags/at.png",
-    "funFact": "Vienna's Schoenbrunn Zoo opened in 1752 and is the oldest zoo in the world."
+    "funFact": "Vienna's Schönbrunn Zoo opened in 1752 and is the oldest zoo in the world."
   },
   {
     "id": "ch",
@@ -247,7 +247,7 @@
     "language": "Hindi",
     "currency": "Indian rupee",
     "flagAsset": "flags/in.png",
-    "funFact": "India's constitution recognises 22 official languages."
+    "funFact": "India's constitution recognises 22 scheduled languages."
   },
   {
     "id": "pk",
@@ -427,7 +427,7 @@
     "language": "Spanish",
     "currency": "Mexican peso",
     "flagAsset": "flags/mx.png",
-    "funFact": "Chocolate was first made from cacao beans in ancient Mexico."
+    "funFact": "Chocolate drinks were first made from cacao beans in ancient Mexico."
   },
   {
     "id": "cu",
@@ -443,7 +443,7 @@
     "id": "br",
     "name": "Brazil",
     "quartetId": "south_america",
-    "capital": "Brasilia",
+    "capital": "Brasília",
     "language": "Portuguese",
     "currency": "Brazilian real",
     "flagAsset": "flags/br.png",

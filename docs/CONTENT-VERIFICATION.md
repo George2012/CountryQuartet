@@ -2,8 +2,10 @@
 
 Review of all 52 countries and 13 quartets in `app/src/main/assets/`.
 
-**Nothing in the dataset was changed.** Every item below marked "decision needed"
-or "suggested correction" is waiting for approval, as Phase 8 requires.
+> **Update — corrections applied.** The four factual errors below have been
+> fixed in `app/src/main/assets/countries.json`, and Q3 was checked against a
+> live source. See §8 for exactly what changed and what deliberately did not.
+> The remaining items are judgement calls that were reviewed and kept.
 
 ## How this was checked, and what that is worth
 
@@ -53,11 +55,17 @@ Options: keep as is; use "Colombo"; or use "Sri Jayawardenepura Kotte (Colombo)"
 **Recommendation: keep the accurate name — the game is educational — and let the
 fun fact carry Colombo if you want it mentioned.**
 
-### Q3. Indonesia — capital "Jakarta" **[verify externally]**
+### Q3. Indonesia — capital "Jakarta" — **RESOLVED, no change**
 Indonesia legislated in 2022 to move its capital to Nusantara in East Kalimantan,
-with a phased transfer. Whether the formal designation has taken effect is
-exactly the kind of fact that may have changed since the training cutoff.
-**This must be checked against a current source before release.**
+with a phased transfer, so this needed checking against a current source.
+
+Checked August 2026: Indonesia's Constitutional Court ruled in May 2026 that
+**Jakarta remains the capital** until a presidential decree transfers the status,
+which has not been issued. Nusantara was downgraded to a "political capital" in
+May 2025 and its legislative complex is targeted for 2027-2028.
+
+`"Jakarta"` is correct. Worth re-checking before release, since the decree could
+land at any time.
 
 ### Q4. Canada — language "English and French"
 The dataset's convention (documented in the Phase 2 report) is *one* primary
@@ -196,7 +204,7 @@ as a promise that the assets exist. Options:
 
 ## 6. Summary of suggested corrections
 
-Nothing here has been applied. Ordered by how strongly it is recommended.
+Ordered by how strongly it was recommended. See §8 for what was applied.
 
 | # | Entry | Change | Why |
 |---|---|---|---|
@@ -218,3 +226,44 @@ Nothing here has been applied. Ordered by how strongly it is recommended.
 - Fun facts were checked for accuracy, not for reading age. A separate pass with
   a 7-year-old reader in mind would be worthwhile.
 - The dataset is English only. Nothing here has been reviewed for translation.
+
+## 8. What was applied
+
+### Corrected in `countries.json`
+
+| Entry | Before | After | Why |
+|---|---|---|---|
+| India, fun fact | "…recognises 22 official languages." | "…recognises 22 **scheduled** languages." | The Eighth Schedule lists 22 *scheduled* languages; the Union's *official* languages are Hindi and English. The old wording conflated them. |
+| Mexico, fun fact | "**Chocolate** was first made from cacao beans in ancient Mexico." | "**Chocolate drinks** were first made from cacao beans in ancient Mexico." | The earliest known cacao *use* is South American. Mesoamerica is where the chocolate drink was developed. |
+| Brazil, capital | Brasilia | Bras&#237;lia | Misspelling in English usage. |
+| Austria, fun fact | Schoenbrunn | Sch&#246;nbrunn | Misspelling in English usage. |
+
+The two accented spellings were the reason ASCII was chosen in Phase 2, out of
+caution about encoding. That caution is now unnecessary and covered by a test:
+`DatasetTest.accented characters survive being loaded from the asset` fails if
+the round trip through the asset ever mangles them. Verified on device as well —
+the countries browser shows "Bras&#237;lia" correctly.
+
+Currency spellings were **not** changed: "Polish zloty", "Mongolian tugrik" and
+"Vietnamese dong" are standard anglicisations, unlike a misspelled place name.
+
+### Checked against a live source
+
+**Q3 Indonesia — no change needed.** Jakarta is still the capital (see §2).
+
+### Reviewed and deliberately kept
+
+These were judgement calls, not errors. Each was recommended for keeping in this
+report and that recommendation stands; none is a silent decision.
+
+| Item | Kept as | Reason |
+|---|---|---|
+| Q1 Israel capital | Jerusalem | Politically sensitive with no purely factual answer. Reference works list Jerusalem. Change it if you would rather the product not take a position. |
+| Q2 Sri Lanka capital | Sri Jayawardenepura Kotte | The accurate legislative capital. The game is educational, and the layout now handles the length. |
+| Q4 Canada language | "English and French" | True, and federal bilingualism is not comparable to the Swiss case. Documented as the one exception to the one-language convention. |
+| G1 Eastern Europe quartet | Unchanged | Poland and Hungary are usually called Central Europe, but fixing it reshuffles two quartets. The grouping is a game mechanic, not a claim. Renaming to "Central and Eastern Europe" remains available. |
+| G2 North America includes Cuba | Unchanged | Correct on the continental definition. |
+| T1 `flagAsset` | Kept | Documented slot for bundled flag images later; this report is the record of why it is empty. |
+
+**These six remain open to your decision.** Nothing about them is wrong; they are
+choices, and changing any of them is a small edit.

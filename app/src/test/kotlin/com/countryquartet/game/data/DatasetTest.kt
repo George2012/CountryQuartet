@@ -116,6 +116,18 @@ class DatasetTest {
     }
 
     @Test
+    fun `accented characters survive being loaded from the asset`() {
+        // ASCII spellings were used at first out of caution about encoding.
+        // This is the guard that lets the correct spellings stay.
+        val brazil = countries.single { it.id == "br" }
+        val austria = countries.single { it.id == "at" }
+
+        assertEquals("Brasília", brazil.capital)
+        assertTrue(brazil.capital, brazil.capital.any { it.code > 127 })
+        assertTrue(austria.funFact, austria.funFact.contains("Schönbrunn"))
+    }
+
+    @Test
     fun `the shipped dataset passes validation`() {
         assertEquals(emptyList<String>(), GameDataValidator.validate(countries, quartets))
     }
