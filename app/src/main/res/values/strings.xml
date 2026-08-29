@@ -19,8 +19,31 @@
     <string name="action_back">Back</string>
 
     <!-- Phase 1 placeholders -->
-    <string name="placeholder_game">The game board arrives in Phase 5.</string>
     <string name="placeholder_countries">Browsing all 13 quartets and 52 countries arrives in a later phase.</string>
     <string name="placeholder_how_to_play">The illustrated rules arrive in Phase 5.</string>
     <string name="placeholder_settings">Sound, animation and statistics arrive in Phase 9.</string>
+    <!-- Game screen -->
+    <string name="game_turn_yours">Your turn</string>
+    <string name="game_turn_other">%1$s is thinking…</string>
+    <string name="game_progress">Quartets completed: %1$d of %2$d</string>
+    <string name="game_your_cards">Your cards</string>
+    <string name="game_your_quartets">Your completed quartets</string>
+    <string name="game_hint_pick_group">Tap a group to work on it.</string>
+    <string name="game_hint_pick_country">Pick the country you want:</string>
+    <string name="game_hint_pick_opponent">Ask which player?</string>
+    <string name="game_ask">ASK</string>
+    <string name="game_cards_left">%1$d cards</string>
+    <string name="game_msg_received">%1$s got %3$s from %2$s.</string>
+    <string name="game_msg_refused">%2$s does not have %3$s. Turn over!</string>
+    <string name="game_msg_quartet">QUARTET COMPLETED! %1$s collected %2$s.</string>
+    <string name="game_over">GAME OVER</string>
+    <string name="game_winner">%1$s wins!</string>
+    <string name="game_draw">It is a draw: %1$s</string>
+    <string name="game_play_again">PLAY AGAIN</string>
+    <string name="game_main_menu">MAIN MENU</string>
+    <string name="game_loading">Dealing the cards…</string>
+    <string name="game_failed">The game content could not be loaded.
+
+%1$s</string>
+    <string name="game_score_line">%1$s: %2$d</string>
 </resources>
