@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlin.random.Random
 
 /**
  * Drives one game: holds the engine state, applies the human player's moves and
@@ -31,6 +32,8 @@ import kotlinx.coroutines.launch
 class GameViewModel(
     private val repository: CountryRepository,
     private val ai: AiStrategy = BasicAi(),
+    /** Seedable so tests can replay an exact deal. */
+    private val random: Random = Random.Default,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<GameUiState>(GameUiState.Loading)
@@ -58,7 +61,7 @@ class GameViewModel(
                 gameData = repository.gameData()
                 engine = GameEngine(gameData)
             }
-            game = engine.newGame()
+            game = engine.newGame(random = random)
             publish()
             continueWithAi()
         } catch (e: Exception) {

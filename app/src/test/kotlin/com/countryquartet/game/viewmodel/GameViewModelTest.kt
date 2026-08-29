@@ -2,6 +2,7 @@ package com.countryquartet.game.viewmodel
 
 import com.countryquartet.game.data.AssetFiles
 import com.countryquartet.game.data.GameDataSource
+import com.countryquartet.game.ai.BasicAi
 import com.countryquartet.game.repository.CountryRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -17,6 +18,7 @@ import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import kotlin.random.Random
 
 /**
  * Drives the ViewModel the way the screen does: pick a group, pick a country,
@@ -33,7 +35,11 @@ class GameViewModelTest {
     @After
     fun tearDown() = Dispatchers.resetMain()
 
-    private fun newViewModel() = GameViewModel(CountryRepository(AssetFiles))
+    private fun newViewModel(seed: Long = 1) = GameViewModel(
+        repository = CountryRepository(AssetFiles),
+        ai = BasicAi(Random(seed)),
+        random = Random(seed),
+    )
 
     private val GameViewModel.playing: GameUiState.Playing
         get() = uiState.value as GameUiState.Playing
@@ -46,9 +52,13 @@ class GameViewModelTest {
         val state = viewModel.playing
         assertEquals(4, state.standings.size)
         assertTrue(state.isHumanTurn)
-        assertEquals(13, state.human.cardCount + state.human.score * 4)
         assertTrue(state.hand.isNotEmpty())
-        assertEquals(0, state.completedQuartetsCount)
+        // Every player holds 13 cards, minus any quartet that was dealt
+        // complete and laid down straight away.
+        state.standings.forEach { player ->
+            assertEquals(player.name, 13, player.cardCount + player.score * 4)
+        }
+        assertEquals(state.standings.sumOf { it.score }, state.completedQuartetsCount)
     }
 
     @Test
@@ -117,8 +127,13 @@ class GameViewModelTest {
             assertTrue("waiting for the human but it is not their turn", state.isHumanTurn)
 
             val group = state.hand.first()
-            viewModel.selectQuartet(group.quartet.id)
-            viewModel.selectCountry(viewModel.playing.selectedGroup!!.missing.first().id)
+            if (state.selection.quartetId != group.quartet.id) {
+                viewModel.selectQuartet(group.quartet.id)
+            }
+            val selected = requireNotNull(viewModel.playing.selectedGroup) {
+                "group ${group.quartet.id} should be selected"
+            }
+            viewModel.selectCountry(selected.missing.first().id)
             viewModel.selectOpponent(state.opponents.first().id)
             assertTrue(viewModel.playing.canAsk)
 
