@@ -16,6 +16,7 @@ internal fun playingState(
     game: GameState,
     selection: Selection,
     message: GameMessage?,
+    animationsEnabled: Boolean = true,
 ): GameUiState.Playing {
     val human = game.players.first { it.isHuman }
     val ownedIds = human.cards.toSet()
@@ -65,6 +66,7 @@ internal fun playingState(
         selection = selection,
         canAsk = canAsk,
         message = message,
+        animationsEnabled = animationsEnabled,
         isFinished = game.isFinished,
         winnerNames = game.winnerIds.map { game.player(it).name },
     )

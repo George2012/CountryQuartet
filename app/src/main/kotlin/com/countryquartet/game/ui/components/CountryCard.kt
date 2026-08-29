@@ -1,5 +1,7 @@
 package com.countryquartet.game.ui.components
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -10,6 +12,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -157,18 +160,27 @@ internal fun CardSurface(
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit,
 ) {
-    val colors = CardDefaults.cardColors(
-        containerColor = when (state) {
-            CardState.Selected -> MaterialTheme.colorScheme.secondaryContainer
-            CardState.Requested -> MaterialTheme.colorScheme.tertiaryContainer
-            CardState.Owned -> MaterialTheme.colorScheme.surfaceVariant
-            CardState.Disabled -> MaterialTheme.colorScheme.surfaceVariant
-            CardState.Normal -> MaterialTheme.colorScheme.surface
-        },
+    // Picking a card is the main thing a player does, so the change of colour
+    // and lift is animated - and snaps instead when animations are switched off.
+    val targetColor = when (state) {
+        CardState.Selected -> MaterialTheme.colorScheme.secondaryContainer
+        CardState.Requested -> MaterialTheme.colorScheme.tertiaryContainer
+        CardState.Owned -> MaterialTheme.colorScheme.surfaceVariant
+        CardState.Disabled -> MaterialTheme.colorScheme.surfaceVariant
+        CardState.Normal -> MaterialTheme.colorScheme.surface
+    }
+    val containerColor by animateColorAsState(
+        targetValue = targetColor,
+        animationSpec = Motion.spec(),
+        label = "cardContainerColor",
     )
-    val elevation = CardDefaults.cardElevation(
-        defaultElevation = if (state == CardState.Selected) 6.dp else 1.dp,
+    val lift by animateDpAsState(
+        targetValue = if (state == CardState.Selected) 6.dp else 1.dp,
+        animationSpec = Motion.spec(),
+        label = "cardElevation",
     )
+    val colors = CardDefaults.cardColors(containerColor = containerColor)
+    val elevation = CardDefaults.cardElevation(defaultElevation = lift)
     if (onClick == null) {
         Card(modifier = modifier, colors = colors, elevation = elevation) { content() }
     } else {

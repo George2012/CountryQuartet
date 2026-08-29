@@ -55,7 +55,8 @@ sealed interface GameMessage {
 
     data class QuartetCompleted(
         val playerName: String,
-        val quartetName: String,
+        val quartet: Quartet,
+        val countries: List<Country>,
     ) : GameMessage
 }
 
@@ -79,6 +80,7 @@ sealed interface GameUiState {
         val selection: Selection,
         val canAsk: Boolean,
         val message: GameMessage?,
+        val animationsEnabled: Boolean,
         val isFinished: Boolean,
         val winnerNames: List<String>,
     ) : GameUiState {
@@ -91,6 +93,10 @@ sealed interface GameUiState {
         /** The quartet the human is currently working on, if any. */
         val selectedGroup: QuartetGroup?
             get() = hand.firstOrNull { it.quartet.id == selection.quartetId }
+
+        /** The quartet just completed, while its banner should be on screen. */
+        val justCompletedQuartet: GameMessage.QuartetCompleted?
+            get() = message as? GameMessage.QuartetCompleted
 
         /** True when more than one player shares the top score. */
         val isDraw: Boolean get() = isFinished && winnerNames.size > 1

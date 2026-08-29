@@ -1,5 +1,16 @@
 package com.countryquartet.game.ui.screens
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,7 +31,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -35,6 +51,8 @@ import com.countryquartet.game.R
 import com.countryquartet.game.ui.components.CardState
 import com.countryquartet.game.ui.components.CompactCountryCard
 import com.countryquartet.game.ui.components.CompletedQuartetCard
+import com.countryquartet.game.ui.components.LocalAnimationsEnabled
+import com.countryquartet.game.ui.components.Motion
 import com.countryquartet.game.ui.components.ScreenScaffold
 import com.countryquartet.game.ui.theme.CountryQuartetTheme
 import com.countryquartet.game.viewmodel.GameMessage
@@ -62,16 +80,20 @@ fun GameScreen(
                 stringResource(R.string.game_failed, state.message),
                 innerPadding,
             )
-            is GameUiState.Playing -> GameContent(
-                state = state,
-                innerPadding = innerPadding,
-                onQuartetClick = viewModel::selectQuartet,
-                onCountryClick = viewModel::selectCountry,
-                onOpponentClick = viewModel::selectOpponent,
-                onAsk = viewModel::ask,
-                onPlayAgain = viewModel::startNewGame,
-                onMainMenu = onBack,
-            )
+            is GameUiState.Playing -> CompositionLocalProvider(
+                LocalAnimationsEnabled provides state.animationsEnabled,
+            ) {
+                GameContent(
+                    state = state,
+                    innerPadding = innerPadding,
+                    onQuartetClick = viewModel::selectQuartet,
+                    onCountryClick = viewModel::selectCountry,
+                    onOpponentClick = viewModel::selectOpponent,
+                    onAsk = viewModel::ask,
+                    onPlayAgain = viewModel::startNewGame,
+                    onMainMenu = onBack,
+                )
+            }
         }
     }
 }
@@ -103,14 +125,25 @@ private fun GameContent(
     ) {
         ScoreBoard(state.standings)
         StatusLine(state)
+        QuartetCompletedBanner(state.justCompletedQuartet)
 
         if (state.isFinished) {
-            GameOverPanel(
-                state = state,
-                onPlayAgain = onPlayAgain,
-                onMainMenu = onMainMenu,
+            AnimatedVisibility(
+                visible = true,
+                enter = if (LocalAnimationsEnabled.current) {
+                    fadeIn(tween(Motion.ENTER_MS)) +
+                        scaleIn(tween(Motion.ENTER_MS), initialScale = 0.9f)
+                } else {
+                    EnterTransition.None
+                },
                 modifier = Modifier.weight(1f),
-            )
+            ) {
+                GameOverPanel(
+                    state = state,
+                    onPlayAgain = onPlayAgain,
+                    onMainMenu = onMainMenu,
+                )
+            }
         } else {
             HandList(
                 state = state,
@@ -137,15 +170,20 @@ private fun ScoreBoard(standings: List<PlayerStanding>) {
         horizontalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         standings.forEach { player ->
+            // Turn changes are shown by the highlight moving along the score
+            // board rather than by anything jumping.
+            val containerColor by animateColorAsState(
+                targetValue = if (player.isCurrent) {
+                    MaterialTheme.colorScheme.primaryContainer
+                } else {
+                    MaterialTheme.colorScheme.surfaceVariant
+                },
+                animationSpec = Motion.spec(),
+                label = "turnHighlight",
+            )
             Card(
                 modifier = Modifier.weight(1f),
-                colors = CardDefaults.cardColors(
-                    containerColor = if (player.isCurrent) {
-                        MaterialTheme.colorScheme.primaryContainer
-                    } else {
-                        MaterialTheme.colorScheme.surfaceVariant
-                    },
-                ),
+                colors = CardDefaults.cardColors(containerColor = containerColor),
             ) {
                 Column(
                     modifier = Modifier.fillMaxWidth().padding(6.dp),
@@ -179,12 +217,31 @@ private fun StatusLine(state: GameUiState.Playing) {
         if (!state.isFinished) {
             Text(text = turn, style = MaterialTheme.typography.titleMedium)
         }
-        state.message?.let { message ->
-            Text(
-                text = messageText(message),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+        // The message is the only place a player learns what happened, so it
+        // changes with a short cross fade and is tinted by the outcome.
+        val animate = LocalAnimationsEnabled.current
+        AnimatedContent(
+            targetState = state.message,
+            transitionSpec = {
+                if (animate) {
+                    fadeIn(tween(Motion.ENTER_MS)) togetherWith fadeOut(tween(Motion.QUICK_MS))
+                } else {
+                    EnterTransition.None togetherWith ExitTransition.None
+                }
+            },
+            label = "gameMessage",
+        ) { message ->
+            if (message != null) {
+                Text(
+                    text = messageText(message),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = when (message) {
+                        is GameMessage.CardRefused -> MaterialTheme.colorScheme.error
+                        is GameMessage.QuartetCompleted -> MaterialTheme.colorScheme.primary
+                        is GameMessage.CardReceived -> MaterialTheme.colorScheme.onSurfaceVariant
+                    },
+                )
+            }
         }
         Text(
             text = stringResource(
@@ -228,7 +285,7 @@ private fun messageText(message: GameMessage): String = when (message) {
     is GameMessage.QuartetCompleted -> stringResource(
         R.string.game_msg_quartet,
         message.playerName,
-        message.quartetName,
+        message.quartet.name,
     )
 }
 
@@ -251,6 +308,7 @@ private fun HandList(
         }
         items(state.hand, key = { it.quartet.id }) { group ->
             QuartetGroupCard(
+                modifier = if (LocalAnimationsEnabled.current) Modifier.animateItem() else Modifier,
                 group = group,
                 isSelected = group.quartet.id == state.selection.quartetId,
                 selectedCountryId = state.selection.countryId,
@@ -277,6 +335,7 @@ private fun HandList(
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun QuartetGroupCard(
+    modifier: Modifier = Modifier,
     group: QuartetGroup,
     isSelected: Boolean,
     selectedCountryId: String?,
@@ -287,6 +346,7 @@ private fun QuartetGroupCard(
     Card(
         onClick = { onQuartetClick(group.quartet.id) },
         enabled = enabled,
+        modifier = modifier,
         colors = CardDefaults.cardColors(
             containerColor = if (isSelected) {
                 MaterialTheme.colorScheme.secondaryContainer
@@ -417,5 +477,48 @@ private fun GameOverPanel(
 private fun GameScreenPreview() {
     CountryQuartetTheme {
         CenteredMessage(stringResource(R.string.game_loading), PaddingValues(0.dp))
+    }
+}
+
+/**
+ * The "QUARTET COMPLETED!" moment: the finished set is shown with all four
+ * countries for a moment and then gets out of the way again.
+ */
+@Composable
+private fun QuartetCompletedBanner(completed: GameMessage.QuartetCompleted?) {
+    val animate = LocalAnimationsEnabled.current
+    var shown by remember { mutableStateOf<GameMessage.QuartetCompleted?>(null) }
+
+    LaunchedEffect(completed) {
+        shown = completed
+        if (completed != null) {
+            kotlinx.coroutines.delay(Motion.BANNER_MS)
+            shown = null
+        }
+    }
+
+    AnimatedVisibility(
+        visible = shown != null,
+        enter = if (animate) {
+            fadeIn(tween(Motion.ENTER_MS)) + scaleIn(tween(Motion.ENTER_MS), initialScale = 0.85f)
+        } else {
+            EnterTransition.None
+        },
+        exit = if (animate) {
+            fadeOut(tween(Motion.QUICK_MS)) + scaleOut(tween(Motion.QUICK_MS), targetScale = 0.95f)
+        } else {
+            ExitTransition.None
+        },
+    ) {
+        shown?.let { banner ->
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(
+                    text = stringResource(R.string.game_quartet_banner, banner.playerName),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+                CompletedQuartetCard(quartet = banner.quartet, countries = banner.countries)
+            }
+        }
     }
 }

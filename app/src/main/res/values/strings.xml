@@ -20,7 +20,6 @@
 
     <!-- Phase 1 placeholders -->
     <string name="placeholder_how_to_play">The illustrated rules arrive in Phase 5.</string>
-    <string name="placeholder_settings">Sound, animation and statistics arrive in Phase 9.</string>
     <!-- Game screen -->
     <string name="game_turn_yours">Your turn</string>
     <string name="game_turn_other">%1$s is thinking…</string>
@@ -38,6 +37,7 @@
     <string name="game_msg_refused">%1$s does not have %2$s. Turn over!</string>
     <string name="game_msg_refused_by_you">You do not have %1$s. Turn over!</string>
     <string name="game_msg_quartet">QUARTET COMPLETED! %1$s collected %2$s.</string>
+    <string name="game_quartet_banner">QUARTET COMPLETED! %1$s</string>
     <string name="game_over">GAME OVER</string>
     <string name="game_winner">%1$s wins!</string>
     <string name="game_draw">It is a draw: %1$s</string>
@@ -58,4 +58,11 @@
 
     <!-- Countries screen -->
     <string name="countries_intro">All 13 quartets and 52 countries. Tap a country to see its card.</string>
+
+    <!-- Settings screen -->
+    <string name="settings_sound">Sound</string>
+    <string name="settings_sound_hint">Play game sounds.</string>
+    <string name="settings_animations">Animations</string>
+    <string name="settings_animations_hint">Animate cards and pause between computer turns.</string>
+    <string name="settings_statistics_later">Statistics and saved settings arrive in a later phase.</string>
 </resources>

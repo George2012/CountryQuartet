@@ -3,16 +3,21 @@ package com.countryquartet.game.viewmodel
 import com.countryquartet.game.data.AssetFiles
 import com.countryquartet.game.data.GameDataSource
 import com.countryquartet.game.ai.BasicAi
+import com.countryquartet.game.model.GameSettings
 import com.countryquartet.game.repository.CountryRepository
+import com.countryquartet.game.repository.InMemorySettingsRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.currentTime
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
@@ -35,10 +40,11 @@ class GameViewModelTest {
     @After
     fun tearDown() = Dispatchers.resetMain()
 
-    private fun newViewModel(seed: Long = 1) = GameViewModel(
+    private fun newViewModel(seed: Long = 1, animations: Boolean = true) = GameViewModel(
         repository = CountryRepository(AssetFiles),
         ai = BasicAi(Random(seed)),
         random = Random(seed),
+        settings = InMemorySettingsRepository(GameSettings(animationsEnabled = animations)),
     )
 
     private val GameViewModel.playing: GameUiState.Playing
@@ -195,6 +201,68 @@ class GameViewModelTest {
             "the human never received a card",
             seen.filterIsInstance<GameMessage.CardReceived>().any { it.askerIsHuman },
         )
+    }
+
+    @Test
+    fun `computer turns pause while animations are on`() = runTest {
+        val viewModel = newViewModel(seed = 6, animations = true)
+        advanceUntilIdle()
+
+        playHumanTurns(viewModel, count = 6)
+
+        assertTrue(
+            "virtual time was ${currentTime}ms",
+            currentTime >= GameViewModel.AI_TURN_DELAY_MS,
+        )
+    }
+
+    @Test
+    fun `switching animations off removes the thinking pause`() = runTest {
+        val viewModel = newViewModel(seed = 6, animations = false)
+        advanceUntilIdle()
+
+        playHumanTurns(viewModel, count = 6)
+
+        assertEquals(0L, currentTime)
+        // The game still runs: turns were taken, they just did not wait.
+        assertTrue(viewModel.playing.message != null)
+    }
+
+    @Test
+    fun `the animation setting reaches a game that is already running`() = runTest {
+        val settings = InMemorySettingsRepository()
+        val viewModel = GameViewModel(
+            repository = CountryRepository(AssetFiles),
+            ai = BasicAi(Random(6)),
+            random = Random(6),
+            settings = settings,
+        )
+        advanceUntilIdle()
+        assertTrue(viewModel.playing.animationsEnabled)
+
+        settings.setAnimationsEnabled(false)
+        advanceUntilIdle()
+
+        assertFalse(viewModel.playing.animationsEnabled)
+    }
+
+    /** Plays [count] human turns, letting the computer players finish each time. */
+    private fun TestScope.playHumanTurns(
+        viewModel: GameViewModel,
+        count: Int,
+    ) {
+        repeat(count) { move ->
+            if (viewModel.playing.isFinished) return
+            val state = viewModel.playing
+            val group = state.hand.first()
+            if (state.selection.quartetId != group.quartet.id) {
+                viewModel.selectQuartet(group.quartet.id)
+            }
+            viewModel.selectCountry(viewModel.playing.selectedGroup!!.missing.first().id)
+            viewModel.selectOpponent(state.opponents[move % state.opponents.size].id)
+            viewModel.ask()
+            advanceUntilIdle()
+        }
     }
 
     @Test

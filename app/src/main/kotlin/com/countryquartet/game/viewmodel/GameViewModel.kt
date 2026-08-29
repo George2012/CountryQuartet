@@ -14,6 +14,8 @@ import com.countryquartet.game.game.RequestOutcome
 import com.countryquartet.game.model.GameData
 import com.countryquartet.game.model.GameState
 import com.countryquartet.game.repository.CountryRepository
+import com.countryquartet.game.repository.InMemorySettingsRepository
+import com.countryquartet.game.repository.SettingsRepository
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -34,6 +36,7 @@ class GameViewModel(
     private val ai: AiStrategy = BasicAi(),
     /** Seedable so tests can replay an exact deal. */
     private val random: Random = Random.Default,
+    private val settings: SettingsRepository = InMemorySettingsRepository.shared,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<GameUiState>(GameUiState.Loading)
@@ -49,6 +52,11 @@ class GameViewModel(
 
     init {
         startNewGame()
+        // A change on the settings screen has to reach a game that is already
+        // running, if only to stop animating mid turn.
+        viewModelScope.launch {
+            settings.settings.collect { publish() }
+        }
     }
 
     /** Deals a fresh game. Used on entry and by "Play again". */
@@ -133,7 +141,7 @@ class GameViewModel(
             while (true) {
                 val current = game ?: return@launch
                 if (current.isFinished || current.currentPlayer.isHuman) return@launch
-                delay(AI_TURN_DELAY_MS)
+                delay(aiThinkingDelay())
                 val request = ai.chooseRequest(engine, current)
                 val result = engine.ask(current, request.targetPlayerId, request.countryId)
                 game = result.state
@@ -156,7 +164,11 @@ class GameViewModel(
                 targetIsHuman = targetPlayer.isHuman,
             )
             is RequestOutcome.Success -> outcome.completedQuartetId?.let { quartetId ->
-                GameMessage.QuartetCompleted(askingPlayer.name, gameData.quartet(quartetId).name)
+                GameMessage.QuartetCompleted(
+                    playerName = askingPlayer.name,
+                    quartet = gameData.quartet(quartetId),
+                    countries = gameData.countriesOf(quartetId),
+                )
             } ?: GameMessage.CardReceived(
                 askerName = askingPlayer.name,
                 targetName = targetPlayer.name,
@@ -169,11 +181,27 @@ class GameViewModel(
 
     private fun publish() {
         val current = game ?: return
-        _uiState.value = playingState(engine, gameData, current, selection, message)
+        _uiState.value = playingState(
+            engine = engine,
+            gameData = gameData,
+            game = current,
+            selection = selection,
+            message = message,
+            animationsEnabled = settings.settings.value.animationsEnabled,
+        )
     }
 
+    /**
+     * How long a computer player pauses before moving.
+     *
+     * The pause is what makes the computer turns followable, so it is part of
+     * the animation setting and disappears with it.
+     */
+    private fun aiThinkingDelay(): Long =
+        if (settings.settings.value.animationsEnabled) AI_TURN_DELAY_MS else 0L
+
     companion object {
-        /** Short pause so the human can follow the computer turns. Refined in Phase 7. */
+        /** Short pause so the human can follow the computer turns. */
         const val AI_TURN_DELAY_MS = 900L
 
         fun factory(context: Context): ViewModelProvider.Factory {
