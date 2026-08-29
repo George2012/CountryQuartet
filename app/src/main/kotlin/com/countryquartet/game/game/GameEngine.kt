@@ -106,6 +106,14 @@ class GameEngine(private val gameData: GameData) {
     fun missingCountries(player: Player, quartetId: String): List<String> =
         gameData.quartet(quartetId).countryIds.filterNot { it in player.cards }
 
+    /**
+     * How many cards of each represented quartet [player] holds, keyed by
+     * quartet id. Used by the AI to pick its strongest quartet and by the UI to
+     * show collection progress.
+     */
+    fun quartetProgress(player: Player): Map<String, Int> =
+        player.cards.groupingBy { gameData.country(it).quartetId }.eachCount()
+
     private fun requireLegal(state: GameState, targetPlayerId: String, countryId: String) {
         illegalReason(state, targetPlayerId, countryId)?.let { throw IllegalMoveException(it) }
     }
