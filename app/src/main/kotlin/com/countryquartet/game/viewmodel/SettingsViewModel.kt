@@ -1,12 +1,17 @@
 package com.countryquartet.game.viewmodel
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import com.countryquartet.game.AppGraph
 import com.countryquartet.game.model.GameSettings
+import com.countryquartet.game.model.GameStatistics
 import com.countryquartet.game.repository.InMemorySettingsRepository
+import com.countryquartet.game.repository.InMemoryStatisticsRepository
 import com.countryquartet.game.repository.SettingsRepository
+import com.countryquartet.game.repository.StatisticsRepository
 import kotlinx.coroutines.flow.StateFlow
 
 /**
@@ -16,18 +21,31 @@ import kotlinx.coroutines.flow.StateFlow
  * so this class will not have to change.
  */
 class SettingsViewModel(
-    private val repository: SettingsRepository = InMemorySettingsRepository.shared,
+    private val settingsRepository: SettingsRepository = InMemorySettingsRepository.shared,
+    private val statisticsRepository: StatisticsRepository = InMemoryStatisticsRepository(),
 ) : ViewModel() {
 
-    val settings: StateFlow<GameSettings> = repository.settings
+    val settings: StateFlow<GameSettings> = settingsRepository.settings
 
-    fun setSoundEnabled(enabled: Boolean) = repository.setSoundEnabled(enabled)
+    val statistics: StateFlow<GameStatistics> = statisticsRepository.statistics
 
-    fun setAnimationsEnabled(enabled: Boolean) = repository.setAnimationsEnabled(enabled)
+    fun setSoundEnabled(enabled: Boolean) = settingsRepository.setSoundEnabled(enabled)
+
+    fun setAnimationsEnabled(enabled: Boolean) = settingsRepository.setAnimationsEnabled(enabled)
+
+    fun resetStatistics() = statisticsRepository.reset()
 
     companion object {
-        fun factory(): ViewModelProvider.Factory = viewModelFactory {
-            initializer { SettingsViewModel() }
+        fun factory(context: Context): ViewModelProvider.Factory {
+            val appContext = context.applicationContext
+            return viewModelFactory {
+                initializer {
+                    SettingsViewModel(
+                        settingsRepository = AppGraph.settings(appContext),
+                        statisticsRepository = AppGraph.statistics(appContext),
+                    )
+                }
+            }
         }
     }
 }

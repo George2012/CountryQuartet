@@ -64,5 +64,18 @@
     <string name="settings_sound_hint">Play game sounds.</string>
     <string name="settings_animations">Animations</string>
     <string name="settings_animations_hint">Animate cards and pause between computer turns.</string>
-    <string name="settings_statistics_later">Statistics and saved settings arrive in a later phase.</string>
+
+    <!-- Statistics -->
+    <string name="stats_title">Statistics</string>
+    <string name="stats_games_played">Games played</string>
+    <string name="stats_games_won">Games won</string>
+    <string name="stats_games_lost">Games lost</string>
+    <string name="stats_draws">Draws</string>
+    <string name="stats_total_quartets">Quartets collected</string>
+    <string name="stats_best_score">Best score</string>
+    <string name="stats_reset">RESET STATISTICS</string>
+    <string name="stats_reset_confirm_title">Reset statistics?</string>
+    <string name="stats_reset_confirm_body">This clears every game you have played on this device. It cannot be undone.</string>
+    <string name="stats_reset_confirm_yes">RESET</string>
+    <string name="stats_reset_confirm_no">CANCEL</string>
 </resources>

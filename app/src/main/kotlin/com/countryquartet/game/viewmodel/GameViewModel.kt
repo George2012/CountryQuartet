@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import com.countryquartet.game.AppGraph
 import com.countryquartet.game.ai.AiStrategy
 import com.countryquartet.game.ai.BasicAi
 import com.countryquartet.game.data.AssetGameDataSource
@@ -15,7 +16,9 @@ import com.countryquartet.game.model.GameData
 import com.countryquartet.game.model.GameState
 import com.countryquartet.game.repository.CountryRepository
 import com.countryquartet.game.repository.InMemorySettingsRepository
+import com.countryquartet.game.repository.InMemoryStatisticsRepository
 import com.countryquartet.game.repository.SettingsRepository
+import com.countryquartet.game.repository.StatisticsRepository
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -37,6 +40,7 @@ class GameViewModel(
     /** Seedable so tests can replay an exact deal. */
     private val random: Random = Random.Default,
     private val settings: SettingsRepository = InMemorySettingsRepository.shared,
+    private val statistics: StatisticsRepository = InMemoryStatisticsRepository(),
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<GameUiState>(GameUiState.Loading)
@@ -49,6 +53,9 @@ class GameViewModel(
     private var selection = Selection()
     private var message: GameMessage? = null
     private var aiTurns: Job? = null
+
+    /** Guards against counting the same finished game more than once. */
+    private var finishRecorded = false
 
     init {
         startNewGame()
@@ -64,6 +71,7 @@ class GameViewModel(
         aiTurns?.cancel()
         selection = Selection()
         message = null
+        finishRecorded = false
         try {
             if (!::gameData.isInitialized) {
                 gameData = repository.gameData()
@@ -181,6 +189,7 @@ class GameViewModel(
 
     private fun publish() {
         val current = game ?: return
+        recordFinishedGame(current)
         _uiState.value = playingState(
             engine = engine,
             gameData = gameData,
@@ -189,6 +198,20 @@ class GameViewModel(
             message = message,
             animationsEnabled = settings.settings.value.animationsEnabled,
         )
+    }
+
+    /**
+     * Adds the finished game to the statistics, exactly once.
+     *
+     * [publish] runs on every state change and on every settings change, so the
+     * guard is what keeps a single game from being counted repeatedly.
+     */
+    private fun recordFinishedGame(current: GameState) {
+        if (finishRecorded || !current.isFinished) return
+        val human = current.players.first { it.isHuman }
+        val outcome = current.outcomeFor(human.id) ?: return
+        statistics.recordFinishedGame(outcome, human.score)
+        finishRecorded = true
     }
 
     /**
@@ -208,7 +231,11 @@ class GameViewModel(
             val appContext = context.applicationContext
             return viewModelFactory {
                 initializer {
-                    GameViewModel(CountryRepository(AssetGameDataSource(appContext)))
+                    GameViewModel(
+                        repository = CountryRepository(AssetGameDataSource(appContext)),
+                        settings = AppGraph.settings(appContext),
+                        statistics = AppGraph.statistics(appContext),
+                    )
                 }
             }
         }

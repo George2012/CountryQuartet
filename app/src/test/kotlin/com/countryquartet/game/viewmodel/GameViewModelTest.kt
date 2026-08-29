@@ -6,6 +6,7 @@ import com.countryquartet.game.ai.BasicAi
 import com.countryquartet.game.model.GameSettings
 import com.countryquartet.game.repository.CountryRepository
 import com.countryquartet.game.repository.InMemorySettingsRepository
+import com.countryquartet.game.repository.InMemoryStatisticsRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -263,6 +264,63 @@ class GameViewModelTest {
             viewModel.ask()
             advanceUntilIdle()
         }
+    }
+
+    @Test
+    fun `finishing a game is recorded exactly once`() = runTest {
+        val statistics = InMemoryStatisticsRepository()
+        val settings = InMemorySettingsRepository(GameSettings(animationsEnabled = false))
+        val viewModel = GameViewModel(
+            repository = CountryRepository(AssetFiles),
+            ai = BasicAi(Random(3)),
+            random = Random(3),
+            settings = settings,
+            statistics = statistics,
+        )
+        advanceUntilIdle()
+        assertEquals(0, statistics.statistics.value.gamesPlayed)
+
+        playHumanTurns(viewModel, count = 500)
+        assertTrue("the game did not finish", viewModel.playing.isFinished)
+
+        val human = viewModel.playing.human
+        assertEquals(1, statistics.statistics.value.gamesPlayed)
+        assertEquals(human.score, statistics.statistics.value.totalQuartets)
+        assertEquals(human.score, statistics.statistics.value.bestScore)
+
+        // The finished state is published again on every settings change. That
+        // must not count the same game a second time.
+        repeat(3) { index ->
+            settings.setAnimationsEnabled(index % 2 == 0)
+            advanceUntilIdle()
+        }
+        assertTrue("still the same finished game", viewModel.playing.isFinished)
+        assertEquals(1, statistics.statistics.value.gamesPlayed)
+        assertEquals(human.score, statistics.statistics.value.totalQuartets)
+    }
+
+    @Test
+    fun `the recorded outcome matches the final standings`() = runTest {
+        val statistics = InMemoryStatisticsRepository()
+        val viewModel = GameViewModel(
+            repository = CountryRepository(AssetFiles),
+            ai = BasicAi(Random(9)),
+            random = Random(9),
+            settings = InMemorySettingsRepository(GameSettings(animationsEnabled = false)),
+            statistics = statistics,
+        )
+        advanceUntilIdle()
+        playHumanTurns(viewModel, count = 500)
+
+        val finished = viewModel.playing
+        val record = statistics.statistics.value
+        val humanWon = finished.human.name in finished.winnerNames
+        when {
+            humanWon && finished.isDraw -> assertEquals(1, record.draws)
+            humanWon -> assertEquals(1, record.gamesWon)
+            else -> assertEquals(1, record.gamesLost)
+        }
+        assertEquals(1, record.gamesPlayed)
     }
 
     @Test

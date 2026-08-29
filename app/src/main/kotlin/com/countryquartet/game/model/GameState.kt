@@ -31,4 +31,15 @@ data class GameState(
         players.firstOrNull { it.id == id } ?: throw IllegalArgumentException("Unknown player id: $id")
 
     fun playerOrNull(id: String): Player? = players.firstOrNull { it.id == id }
+
+    /**
+     * How the finished game went for [playerId], or null while it is still
+     * being played. Sharing the top score counts as a draw, not a win.
+     */
+    fun outcomeFor(playerId: String): GameOutcome? = when {
+        !isFinished -> null
+        playerId !in winnerIds -> GameOutcome.LOST
+        winnerIds.size > 1 -> GameOutcome.DRAW
+        else -> GameOutcome.WON
+    }
 }
