@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Themed icon layer. The system replaces the colour and keeps only the shape,
+  so this is drawn as strokes: reusing the full colour foreground would tint the
+  filled globe into a solid disc and lose the lines.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Globe outline -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FF000000"
+        android:strokeWidth="5"
+        android:pathData="M54,29a25,25 0 1,0 0,50a25,25 0 1,0 0,-50z" />
+
+    <!-- Equator -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FF000000"
+        android:strokeWidth="5"
+        android:pathData="M30,54L78,54" />
+
+    <!-- Meridian -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FF000000"
+        android:strokeWidth="5"
+        android:pathData="M54,29a13,25 0 1,0 0,50a13,25 0 1,0 0,-50z" />
+</vector>

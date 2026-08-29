@@ -18,8 +18,6 @@
     <!-- Common -->
     <string name="action_back">Back</string>
 
-    <!-- Phase 1 placeholders -->
-    <string name="placeholder_how_to_play">The illustrated rules arrive in Phase 5.</string>
     <!-- Game screen -->
     <string name="game_turn_yours">Your turn</string>
     <string name="game_turn_other">%1$s is thinking…</string>
@@ -78,4 +76,19 @@
     <string name="stats_reset_confirm_body">This clears every game you have played on this device. It cannot be undone.</string>
     <string name="stats_reset_confirm_yes">RESET</string>
     <string name="stats_reset_confirm_no">CANCEL</string>
+
+    <!-- How to play -->
+    <string name="howto_intro">Four players. Thirteen groups of four countries. Collect the most groups to win!</string>
+    <string name="howto_step1_title">You get 13 cards</string>
+    <string name="howto_step1_body">Every card is a country, with its flag, capital city, language and money.</string>
+    <string name="howto_step2_title">Every country is in a group of 4</string>
+    <string name="howto_step2_body">Sweden, Norway, Denmark and Finland make the Nordic Countries group. Your cards are sorted into groups for you.</string>
+    <string name="howto_step3_title">Ask another player for a card</string>
+    <string name="howto_step3_body">Pick a group you have started, choose a country you still need, and ask one player for it.</string>
+    <string name="howto_step4_title">Right guess? Go again</string>
+    <string name="howto_step4_body">If they have the card, you take it and keep your turn. If they do not, the next player has a turn.</string>
+    <string name="howto_step5_title">Collect all 4 to score</string>
+    <string name="howto_step5_body">A full group of four is a quartet and scores 1 point. There are 13 to win.</string>
+    <string name="howto_example">Example group</string>
+    <string name="howto_tip">Tip: the card tells you which countries you still need.</string>
 </resources>
