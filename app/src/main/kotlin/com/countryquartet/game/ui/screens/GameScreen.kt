@@ -51,6 +51,7 @@ import com.countryquartet.game.R
 import com.countryquartet.game.ui.components.CardState
 import com.countryquartet.game.ui.components.CompactCountryCard
 import com.countryquartet.game.ui.components.CompletedQuartetCard
+import com.countryquartet.game.ui.components.DeckPile
 import com.countryquartet.game.ui.components.LocalAnimationsEnabled
 import com.countryquartet.game.ui.components.Motion
 import com.countryquartet.game.ui.components.ScreenScaffold
@@ -213,7 +214,19 @@ private fun StatusLine(state: GameUiState.Playing) {
     } else {
         stringResource(R.string.game_turn_other, state.currentPlayerName)
     }
-    Column(modifier = Modifier.fillMaxWidth()) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        StatusText(turn = turn, state = state, modifier = Modifier.weight(1f))
+        DeckPile(count = state.deckCount)
+    }
+}
+
+@Composable
+private fun StatusText(turn: String, state: GameUiState.Playing, modifier: Modifier = Modifier) {
+    Column(modifier = modifier) {
         if (!state.isFinished) {
             Text(text = turn, style = MaterialTheme.typography.titleMedium)
         }

@@ -28,6 +28,7 @@ object TestGame {
         vararg hands: List<String>,
         currentPlayerIndex: Int = 0,
         completed: List<List<String>> = List(hands.size) { emptyList() },
+        deck: List<String> = emptyList(),
     ): GameState = GameState(
         players = hands.mapIndexed { index, cards ->
             Player(
@@ -41,12 +42,13 @@ object TestGame {
         currentPlayerIndex = currentPlayerIndex,
         status = GameStatus.IN_PROGRESS,
         winnerIds = emptyList(),
+        deck = deck,
     )
 
-    /** Every card held in a hand or locked away in a completed quartet. */
+    /** Every card: in a hand, in a completed quartet, or still in the draw pile. */
     fun allCards(state: GameState): List<String> = state.players.flatMap { player ->
         player.cards + player.completedQuartets.flatMap { gameData.quartet(it).countryIds }
-    }
+    } + state.deck
 
     /** Countries of [quartetId] in dataset order. */
     fun cardsOf(quartetId: String): List<String> = gameData.quartet(quartetId).countryIds

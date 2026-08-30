@@ -91,4 +91,8 @@
     <string name="howto_step5_body">A full group of four is a quartet and scores 1 point. There are 13 to win.</string>
     <string name="howto_example">Example group</string>
     <string name="howto_tip">Tip: the card tells you which countries you still need.</string>
+
+    <!-- Draw pile -->
+    <string name="deck_label">Deck</string>
+    <string name="deck_cards_left">%1$d cards left in the deck</string>
 </resources>

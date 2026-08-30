@@ -13,7 +13,11 @@ import kotlin.random.Random
  * new [GameState], so the same engine serves the human player, the AI and the
  * tests.
  */
-class GameEngine(private val gameData: GameData) {
+class GameEngine(
+    private val gameData: GameData,
+    /** Opening hand size. One place to change how long a game runs. */
+    private val cardsPerPlayer: Int = DEFAULT_CARDS_PER_PLAYER,
+) {
 
     /** Starts a game: shuffle, deal and lay down quartets that were dealt complete. */
     fun newGame(
@@ -25,15 +29,21 @@ class GameEngine(private val gameData: GameData) {
         }
         require(seats.map { it.id }.distinct().size == seats.size) { "Player ids must be unique" }
 
-        val hands = Dealer.deal(Deck.shuffled(gameData, random), seats.size)
+        val dealtCards = Dealer.deal(Deck.shuffled(gameData, random), seats.size, cardsPerPlayer)
         val players = seats.mapIndexed { index, seat ->
-            Player(id = seat.id, name = seat.name, isHuman = seat.isHuman, cards = hands[index])
+            Player(
+                id = seat.id,
+                name = seat.name,
+                isHuman = seat.isHuman,
+                cards = dealtCards.hands[index],
+            )
         }
         val dealt = GameState(
             players = players,
             currentPlayerIndex = 0,
             status = GameStatus.IN_PROGRESS,
             winnerIds = emptyList(),
+            deck = dealtCards.deck,
         )
         // A hand of 13 can already hold complete quartets. They have to be laid
         // down now: their owner could never ask for cards they already hold, so
@@ -41,7 +51,7 @@ class GameEngine(private val gameData: GameData) {
         val resolved = players.indices.fold(dealt) { state, index ->
             state.withPlayer(index, completeQuartets(state.players[index]).first)
         }
-        return settle(resolved)
+        return beginTurn(settle(resolved))
     }
 
     /**
@@ -58,9 +68,16 @@ class GameEngine(private val gameData: GameData) {
         val target = state.players[targetIndex]
 
         if (countryId !in target.cards) {
+            // Losing the turn is paid for with one card from the draw pile.
+            val afterDraw = drawCard(state, askingIndex)
             return TurnResult(
-                state = settle(advanceTurn(state)),
-                outcome = RequestOutcome.Failure(asking.id, target.id, countryId),
+                state = beginTurn(settle(advanceTurn(afterDraw))),
+                outcome = RequestOutcome.Failure(
+                    askingPlayerId = asking.id,
+                    targetPlayerId = target.id,
+                    countryId = countryId,
+                    drewFromDeck = afterDraw.deckCount < state.deckCount,
+                ),
             )
         }
 
@@ -70,9 +87,9 @@ class GameEngine(private val gameData: GameData) {
             .withPlayer(askingIndex, receiver)
 
         return TurnResult(
-            // A successful request keeps the turn, so the state is only settled,
-            // never advanced.
-            state = settle(afterTransfer),
+            // A successful request keeps the turn, so the state is never
+            // advanced; beginTurn only steps in if the hand is now empty.
+            state = beginTurn(settle(afterTransfer)),
             outcome = RequestOutcome.Success(
                 askingPlayerId = asking.id,
                 targetPlayerId = target.id,
@@ -152,39 +169,70 @@ class GameEngine(private val gameData: GameData) {
         return current to completed
     }
 
-    /**
-     * Finishes the game once every quartet is collected, and otherwise makes
-     * sure the player to move actually holds cards.
-     */
-    private fun settle(state: GameState): GameState {
-        if (state.completedQuartetsCount == gameData.quartets.size) {
-            val best = state.players.maxOf { it.score }
-            return state.copy(
-                status = GameStatus.FINISHED,
-                winnerIds = state.players.filter { it.score == best }.map { it.id },
-            )
-        }
-        // A player who ran out of cards has nothing legal to ask for, so the
-        // turn passes on. The written rules do not cover empty hands; without
-        // this the game would deadlock.
-        return if (state.currentPlayer.cards.isEmpty()) advanceTurn(state) else state
+    /** Takes the top card of the draw pile, if there is one. */
+    private fun drawCard(state: GameState, playerIndex: Int): GameState {
+        val card = state.deck.firstOrNull() ?: return state
+        val receiver = state.players[playerIndex].copy(
+            cards = state.players[playerIndex].cards + card,
+        )
+        // A drawn card can complete a quartet just like a card that was asked for.
+        return state.copy(deck = state.deck.drop(1))
+            .withPlayer(playerIndex, completeQuartets(receiver).first)
     }
 
-    private fun advanceTurn(state: GameState): GameState {
-        val size = state.players.size
-        for (step in 1..size) {
-            val index = (state.currentPlayerIndex + step) % size
-            if (state.players[index].cards.isNotEmpty()) return state.copy(currentPlayerIndex = index)
+    /**
+     * Hands the turn to a player who can actually use it.
+     *
+     * A player who starts a turn with no cards takes one from the draw pile and
+     * loses the turn anyway. Once the pile is empty they are simply passed over,
+     * and play carries on between whoever still holds cards.
+     */
+    private fun beginTurn(state: GameState): GameState {
+        var current = state
+        // Each pass either removes a card from the pile or moves along the
+        // table, so this cannot run away.
+        val limit = state.deck.size + state.players.size + 1
+        repeat(limit) {
+            if (current.isFinished || current.currentPlayer.cards.isNotEmpty()) return current
+            current = when {
+                current.deck.isNotEmpty() -> advanceTurn(drawCard(current, current.currentPlayerIndex))
+                current.players.any { it.cards.isNotEmpty() } -> advanceTurn(current)
+                // Nobody holds a card and the pile is gone: the game is over.
+                else -> return finish(current)
+            }
+            current = settle(current)
         }
-        return state
+        return current
     }
+
+    /** Finishes the game once every quartet has been collected. */
+    private fun settle(state: GameState): GameState =
+        if (state.completedQuartetsCount == gameData.quartets.size) finish(state) else state
+
+    private fun finish(state: GameState): GameState {
+        val best = state.players.maxOf { it.score }
+        return state.copy(
+            status = GameStatus.FINISHED,
+            winnerIds = state.players.filter { it.score == best }.map { it.id },
+        )
+    }
+
+    /** Simply the next seat: skipping empty hands is [beginTurn]'s job now. */
+    private fun advanceTurn(state: GameState): GameState =
+        state.copy(currentPlayerIndex = (state.currentPlayerIndex + 1) % state.players.size)
 
     private fun GameState.withPlayer(index: Int, player: Player): GameState =
         copy(players = players.toMutableList().also { it[index] = player })
 
     companion object {
         const val PLAYER_COUNT = 4
-        const val CARDS_PER_PLAYER = 13
+
+        /**
+         * Cards dealt to each player at the start. The rest become the draw
+         * pile, so a smaller hand means a longer pile and a longer game.
+         */
+        const val DEFAULT_CARDS_PER_PLAYER = 5
+
         const val HUMAN_ID = "human"
 
         /** Default table: the human plus three AI opponents. The UI may pass its own names. */

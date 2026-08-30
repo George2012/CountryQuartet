@@ -15,6 +15,8 @@ data class GameState(
     val currentPlayerIndex: Int,
     val status: GameStatus,
     val winnerIds: List<String>,
+    /** Cards left to draw from, face down. Empty once the pile runs out. */
+    val deck: List<String> = emptyList(),
 ) {
     /**
      * Number of quartets finished by all players together.
@@ -24,6 +26,9 @@ data class GameState(
     val completedQuartetsCount: Int = players.sumOf { it.completedQuartets.size }
 
     val currentPlayer: Player get() = players[currentPlayerIndex]
+
+    /** How many cards are still in the draw pile. */
+    val deckCount: Int get() = deck.size
 
     val isFinished: Boolean get() = status == GameStatus.FINISHED
 

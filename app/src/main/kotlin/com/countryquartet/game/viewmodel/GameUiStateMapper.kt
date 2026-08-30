@@ -61,6 +61,7 @@ internal fun playingState(
         },
         completedQuartetsCount = game.completedQuartetsCount,
         totalQuartets = gameData.quartets.size,
+        deckCount = game.deckCount,
         currentPlayerName = game.currentPlayer.name,
         isHumanTurn = isHumanTurn,
         selection = selection,

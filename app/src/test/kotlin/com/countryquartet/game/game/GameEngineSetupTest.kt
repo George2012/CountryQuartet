@@ -21,7 +21,7 @@ class GameEngineSetupTest {
     }
 
     @Test
-    fun `a new game deals all 52 cards`() {
+    fun `a new game accounts for all 52 cards`() {
         val state = engine.newGame(random = Random(5))
         val cards = TestGame.allCards(state)
 
@@ -30,16 +30,35 @@ class GameEngineSetupTest {
     }
 
     @Test
-    fun `each player starts with 13 cards unless a quartet was dealt complete`() {
+    fun `each player starts with the dealt hand size`() {
         val state = engine.newGame(random = Random(5))
 
         state.players.forEach { player ->
             assertEquals(
                 "player ${player.id}",
-                GameEngine.CARDS_PER_PLAYER,
+                GameEngine.DEFAULT_CARDS_PER_PLAYER,
                 player.cards.size + player.completedQuartets.size * 4,
             )
         }
+    }
+
+    @Test
+    fun `the cards that were not dealt become the draw pile`() {
+        val state = engine.newGame(random = Random(5))
+
+        assertEquals(52 - 4 * GameEngine.DEFAULT_CARDS_PER_PLAYER, state.deckCount)
+        assertEquals(52, TestGame.allCards(state).size)
+    }
+
+    @Test
+    fun `the hand size is a parameter`() {
+        val shortGame = GameEngine(TestGame.gameData, cardsPerPlayer = 3)
+            .newGame(random = Random(5))
+
+        shortGame.players.forEach { player ->
+            assertEquals(3, player.cards.size + player.completedQuartets.size * 4)
+        }
+        assertEquals(52 - 12, shortGame.deckCount)
     }
 
     @Test

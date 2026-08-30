@@ -1,6 +1,7 @@
 package com.countryquartet.game.viewmodel
 
 import com.countryquartet.game.data.AssetFiles
+import com.countryquartet.game.game.GameEngine
 import com.countryquartet.game.data.GameDataSource
 import com.countryquartet.game.ai.BasicAi
 import com.countryquartet.game.model.GameSettings
@@ -60,11 +61,16 @@ class GameViewModelTest {
         assertEquals(4, state.standings.size)
         assertTrue(state.isHumanTurn)
         assertTrue(state.hand.isNotEmpty())
-        // Every player holds 13 cards, minus any quartet that was dealt
-        // complete and laid down straight away.
+        // Every player holds the dealt hand size, minus any quartet that was
+        // dealt complete and laid down straight away.
         state.standings.forEach { player ->
-            assertEquals(player.name, 13, player.cardCount + player.score * 4)
+            assertEquals(
+                player.name,
+                GameEngine.DEFAULT_CARDS_PER_PLAYER,
+                player.cardCount + player.score * 4,
+            )
         }
+        assertEquals(52 - 4 * GameEngine.DEFAULT_CARDS_PER_PLAYER, state.deckCount)
         assertEquals(state.standings.sumOf { it.score }, state.completedQuartetsCount)
     }
 
@@ -336,7 +342,10 @@ class GameViewModelTest {
         assertEquals(0, second.completedQuartetsCount)
         assertEquals(null, second.message)
         assertEquals(null, second.selection.quartetId)
-        assertEquals(13, second.human.cardCount + second.human.score * 4)
+        assertEquals(
+            GameEngine.DEFAULT_CARDS_PER_PLAYER,
+            second.human.cardCount + second.human.score * 4,
+        )
         assertTrue("a reshuffle should not be impossible", first.isNotEmpty())
     }
 }

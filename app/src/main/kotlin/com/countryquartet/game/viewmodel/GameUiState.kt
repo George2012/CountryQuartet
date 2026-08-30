@@ -75,6 +75,8 @@ sealed interface GameUiState {
         val standings: List<PlayerStanding>,
         val completedQuartetsCount: Int,
         val totalQuartets: Int,
+        /** Cards left in the draw pile, shown on the deck. */
+        val deckCount: Int,
         val currentPlayerName: String,
         val isHumanTurn: Boolean,
         val selection: Selection,

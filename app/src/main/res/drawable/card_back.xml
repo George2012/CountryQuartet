@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Face down card: the globe motif from the app icon, on the brand blue. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="64dp"
+    android:height="88dp"
+    android:viewportWidth="64"
+    android:viewportHeight="88">
+
+    <!-- Card body -->
+    <path
+        android:fillColor="#FF0E3A66"
+        android:pathData="M6,2h52a4,4 0 0,1 4,4v76a4,4 0 0,1 -4,4h-52a4,4 0 0,1 -4,-4v-76a4,4 0 0,1 4,-4z" />
+
+    <!-- Inner border -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FF6FA8DC"
+        android:strokeWidth="1.5"
+        android:pathData="M9,7h46a2,2 0 0,1 2,2v70a2,2 0 0,1 -2,2h-46a2,2 0 0,1 -2,-2v-70a2,2 0 0,1 2,-2z" />
+
+    <!-- Globe -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FF6FA8DC"
+        android:strokeWidth="2"
+        android:pathData="M32,28a16,16 0 1,0 0,32a16,16 0 1,0 0,-32z" />
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FF6FA8DC"
+        android:strokeWidth="2"
+        android:pathData="M16,44L48,44" />
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FF6FA8DC"
+        android:strokeWidth="2"
+        android:pathData="M32,28a8,16 0 1,0 0,32a8,16 0 1,0 0,-32z" />
+</vector>

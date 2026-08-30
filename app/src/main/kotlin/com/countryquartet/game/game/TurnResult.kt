@@ -34,11 +34,16 @@ sealed interface RequestOutcome {
         val completedQuartetId: String? = null,
     ) : RequestOutcome
 
-    /** The opponent did not have the card, so the turn moves on. */
+    /**
+     * The opponent did not have the card, so the turn moves on.
+     *
+     * [drewFromDeck] is false once the draw pile has run out.
+     */
     data class Failure(
         override val askingPlayerId: String,
         override val targetPlayerId: String,
         override val countryId: String,
+        val drewFromDeck: Boolean = false,
     ) : RequestOutcome
 }
 

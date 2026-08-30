@@ -45,14 +45,18 @@ class GameSimulator(
         return SimulationResult(seed, moves, state)
     }
 
-    /** Every card is somewhere, exactly once, and no score appeared from nowhere. */
+    /**
+     * Every card is somewhere - a hand, a completed quartet or the draw pile -
+     * exactly once, and no score appeared from nowhere.
+     */
     private fun checkTable(state: GameState, seed: Long, move: Int) {
         val where = "seed $seed move $move"
         val inHands = state.players.flatMap { it.cards }
         val locked = state.players.flatMap { player ->
             player.completedQuartets.flatMap { gameData.quartet(it).countryIds }
         }
-        val all = inHands + locked
+        // The draw pile holds cards too, so it counts towards the deck total.
+        val all = inHands + locked + state.deck
 
         check(all.size == deck.size) { "$where: expected ${deck.size} cards but found ${all.size}" }
         check(all.distinct().size == all.size) {

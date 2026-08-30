@@ -53,6 +53,15 @@ class AiSimulationTest {
     }
 
     @Test
+    fun `every game runs the draw pile down to empty`() {
+        // If the pile never emptied, the rules for playing on without it would
+        // never be exercised by these simulations.
+        val leftover = (1L..GAMES).map { simulator.play(it).finalState.deckCount }
+
+        assertEquals("some games ended with cards still in the pile", listOf(0), leftover.distinct())
+    }
+
+    @Test
     fun `winners are always the players with the highest score`() {
         (1L..GAMES).forEach { seed ->
             val state = simulator.play(seed).finalState
