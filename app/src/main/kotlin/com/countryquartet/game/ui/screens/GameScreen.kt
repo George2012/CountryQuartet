@@ -402,7 +402,10 @@ private fun QuartetGroupCard(
                         CompactCountryCard(
                             countryId = country.id,
                             name = country.name,
-                            capital = null,
+                            // Cards you do not hold yet show their capital too:
+                            // it keeps every card the same height and there is
+                            // something to learn while choosing.
+                            capital = country.capital,
                             state = when {
                                 !enabled -> CardState.Disabled
                                 country.id == selectedCountryId -> CardState.Selected
