@@ -16,8 +16,8 @@ with a throwaway key for verification only. See §2 before uploading anything.
 | Min SDK | 26 (Android 8.0) | As specified. |
 | Target SDK | 37 | Current stable in this environment. |
 | Compile SDK | 37 | |
-| App icon | Adaptive, vector | Globe on brand blue, foreground inside the 66dp safe zone. |
-| Themed icon | Dedicated monochrome layer | Drawn as strokes; reusing the colour art would tint into a solid disc. |
+| App icon | Adaptive, raster foreground | Globe ringed by four flags on brand navy. Foreground generated at all five densities, artwork scaled to the 66dp safe zone. |
+| Themed icon | Dedicated monochrome vector | Drawn as strokes; the colour art would tint into a solid disc. Still the plain globe, not the flag ring. |
 | Permissions | None requested | No `INTERNET`. See §3. |
 | Debug logging | None | No `Log`, `println` or `printStackTrace` anywhere in `src/main`. |
 | Placeholder content | None left | The last one — How to Play — was found by this review, see §5. |
@@ -110,7 +110,8 @@ was removed from `strings.xml`. No placeholder text remains in the app.
       switch; shipping a control that does nothing is a support complaint.
 - [ ] Store listing: title, short description ("Collect countries, complete
       quartets, and learn geography!"), full description, feature graphic and
-      screenshots.
+      screenshots. The 512x512 listing icon is ready at
+      `docs/store/play-icon-512.png`.
 - [ ] Content rating questionnaire — the game has no ads, no purchases, no
       network and no user content.
 - [ ] Data safety form: declare that no data is collected or shared. Statistics
