@@ -13,7 +13,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -23,6 +22,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.countryquartet.game.R
+import com.countryquartet.game.ui.theme.DeckCountGreen
 
 /**
  * The face down draw pile with the number of cards left written on it.
@@ -56,7 +56,7 @@ fun DeckPile(
                 DeckCard(width, height, Modifier)
                 Text(
                     text = count.toString(),
-                    color = Color.White,
+                    color = DeckCountGreen,
                     fontWeight = FontWeight.Bold,
                     fontSize = 18.sp,
                     style = MaterialTheme.typography.titleMedium,
@@ -73,8 +73,10 @@ fun DeckPile(
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(
+                        // Same green as a full deck, darkened so it still reads
+                        // on the light empty frame.
                         text = "0",
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = MaterialTheme.colorScheme.tertiary,
                         style = MaterialTheme.typography.titleMedium,
                     )
                 }

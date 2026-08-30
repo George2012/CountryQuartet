@@ -10,6 +10,9 @@ import androidx.compose.ui.graphics.Color
  * device, which matters for a branded, child-friendly card game.
  */
 
+/** The number of cards left, written on the face down deck. */
+internal val DeckCountGreen = Color(0xFF7BE8A4)
+
 // Light
 internal val LightPrimary = Color(0xFF1B5E9E)
 internal val LightOnPrimary = Color(0xFFFFFFFF)
