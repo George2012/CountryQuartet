@@ -189,10 +189,14 @@ Norway, Denmark and Finland are the natural four. No concern.
 
 ## 5. Technical / data concern
 
-### T1. `flagAsset` points at files that do not exist
+### T1. `flagAsset` points at files that do not exist — **superseded**
 Every country carries `flagAsset: "flags/<id>.png"`, but there is no `flags/`
-directory. Since Phase 6 the flag is rendered from the ISO country id as a pair
-of regional indicator symbols (a flag emoji), so the field is unused.
+directory.
+
+Flags are now bundled as real images in `res/drawable-nodpi/flag_<id>.webp`,
+looked up by the same ISO id through `flagDrawable()`, and a test fails if any
+country lacks one. The `flagAsset` string is therefore still unused, but the
+thing it promised now exists under a different name.
 
 This is not wrong data, but it is misleading: a future contributor will read it
 as a promise that the assets exist. Options:

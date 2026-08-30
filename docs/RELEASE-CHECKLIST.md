@@ -16,6 +16,7 @@ with a throwaway key for verification only. See §2 before uploading anything.
 | Min SDK | 26 (Android 8.0) | As specified. |
 | Target SDK | 37 | Current stable in this environment. |
 | Compile SDK | 37 | |
+| Flags | Bundled images | 52 lossless WebP files, true aspect ratios, no longer dependent on the system emoji font. |
 | App icon | Adaptive, raster foreground | Globe ringed by four flags on brand navy. Foreground generated at all five densities, artwork scaled to the 66dp safe zone. |
 | Themed icon | Dedicated monochrome vector | Drawn as strokes; the colour art would tint into a solid disc. Still the plain globe, not the flag ring. |
 | Permissions | None requested | No `INTERNET`. See §3. |
@@ -126,10 +127,12 @@ was removed from `strings.xml`. No placeholder text remains in the app.
 - **Android 8.0 (API 26) is untested.** Everything was verified on API 37. The
   app uses no APIs above its minimum and the build enforces it, but an API 26
   device or emulator image should be run before release.
-- **Flags are emoji, not images.** They render from the country's ISO code, so
-  they depend on the system emoji font. Verified on the emulator; a device with
-  a non-Google font could show letter pairs instead. See
-  `docs/CONTENT-VERIFICATION.md` §5.
+- **Flag images are bundled and must be credited if required.** 52 flags are
+  shipped as lossless WebP in `res/drawable-nodpi`, adding about 50 KB. They
+  come from flagcdn.com (Flagpedia), which publishes them for free use; the
+  designs of national flags are themselves not subject to copyright. Confirm
+  this is acceptable for your listing before release. The emoji rendering is
+  kept only as a fallback for a country with no bundled image.
 - **The Sound switch does nothing.** There are no sounds in the app.
 - **No crash reporting.** Deliberate: no analytics or third-party SDKs in v1, so
   crashes are only visible through Play Console vitals.
