@@ -44,7 +44,7 @@ fun CompactCountryCard(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
-            CountryFlag(countryId = countryId, size = FLAG_HEIGHT, fontSize = FLAG_GLYPH)
+            CountryFlag(countryId = countryId, size = FLAG_HEIGHT)
 
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,

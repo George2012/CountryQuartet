@@ -61,7 +61,6 @@ fun CompletedQuartetCard(
                         CountryFlag(
                             countryId = country.id,
                             size = 22.dp,
-                            fontSize = MaterialTheme.typography.labelMedium.fontSize,
                         )
                         Text(text = country.name, style = MaterialTheme.typography.labelSmall)
                     }
