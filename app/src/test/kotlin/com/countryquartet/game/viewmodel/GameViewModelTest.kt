@@ -147,8 +147,13 @@ class GameViewModelTest {
                 "group ${group.quartet.id} should be selected"
             }
             viewModel.selectCountry(selected.missing.first().id)
-            viewModel.selectOpponent(state.opponents.first().id)
-            assertTrue(viewModel.playing.canAsk)
+            // Selecting is a toggle, and a successful ask keeps the opponent
+            // picked, so tapping the same one again would clear it.
+            val opponent = state.opponents.first().id
+            if (viewModel.playing.selection.opponentId != opponent) {
+                viewModel.selectOpponent(opponent)
+            }
+            assertTrue("nothing to ask with", viewModel.playing.canAsk)
 
             viewModel.ask()
             // Let the computer players finish their turns.
@@ -178,8 +183,12 @@ class GameViewModelTest {
             }
             viewModel.selectCountry(viewModel.playing.selectedGroup!!.missing.first().id)
             // Rotate through the opponents; always asking the same one can go a
-            // whole game without a single hit.
-            viewModel.selectOpponent(state.opponents[moves % state.opponents.size].id)
+            // whole game without a single hit. Skip when already selected,
+            // because selecting is a toggle.
+            val opponent = state.opponents[moves % state.opponents.size].id
+            if (viewModel.playing.selection.opponentId != opponent) {
+                viewModel.selectOpponent(opponent)
+            }
 
             viewModel.ask()
             // Sampled before the computer turns run, so this is the human move.
@@ -266,7 +275,10 @@ class GameViewModelTest {
                 viewModel.selectQuartet(group.quartet.id)
             }
             viewModel.selectCountry(viewModel.playing.selectedGroup!!.missing.first().id)
-            viewModel.selectOpponent(state.opponents[move % state.opponents.size].id)
+            val opponent = state.opponents[move % state.opponents.size].id
+            if (viewModel.playing.selection.opponentId != opponent) {
+                viewModel.selectOpponent(opponent)
+            }
             viewModel.ask()
             advanceUntilIdle()
         }

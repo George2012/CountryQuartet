@@ -231,7 +231,7 @@ class GameEngine(
          * Cards dealt to each player at the start. The rest become the draw
          * pile, so a smaller hand means a longer pile and a longer game.
          */
-        const val DEFAULT_CARDS_PER_PLAYER = 5
+        const val DEFAULT_CARDS_PER_PLAYER = 6
 
         const val HUMAN_ID = "human"
 
