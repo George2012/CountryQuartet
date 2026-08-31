@@ -129,7 +129,12 @@ private fun GameContent(
         modifier = Modifier.fillMaxSize().padding(innerPadding).padding(horizontal = 12.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        ScoreBoard(state.standings)
+        ScoreBoard(
+            standings = state.standings,
+            selectedOpponentId = state.selection.opponentId,
+            canChoose = state.isHumanTurn,
+            onOpponentClick = onOpponentClick,
+        )
         StatusLine(state)
         QuartetCompletedBanner(state.justCompletedQuartet)
 
@@ -159,47 +164,63 @@ private fun GameContent(
                 onAsk = onAsk,
                 modifier = Modifier.weight(1f),
             )
-            OpponentPicker(state, onOpponentClick)
         }
     }
 }
 
 @Composable
-private fun ScoreBoard(standings: List<PlayerStanding>) {
+private fun ScoreBoard(
+    standings: List<PlayerStanding>,
+    selectedOpponentId: String?,
+    canChoose: Boolean,
+    onOpponentClick: (String) -> Unit,
+) {
     Row(
         modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         standings.forEach { player ->
-            // Turn changes are shown by the highlight moving along the score
-            // board rather than by anything jumping.
-            val containerColor by animateColorAsState(
-                targetValue = if (player.isCurrent) {
-                    MaterialTheme.colorScheme.primaryContainer
-                } else {
-                    MaterialTheme.colorScheme.surfaceVariant
-                },
-                animationSpec = Motion.spec(),
-                label = "turnHighlight",
-            )
-            Card(
-                modifier = Modifier.weight(1f),
-                colors = CardDefaults.cardColors(containerColor = containerColor),
-            ) {
-                Column(
-                    modifier = Modifier.fillMaxWidth().padding(6.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
+            Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
+                // Turn changes are shown by the highlight moving along the
+                // score board rather than by anything jumping.
+                val containerColor by animateColorAsState(
+                    targetValue = if (player.isCurrent) {
+                        MaterialTheme.colorScheme.primaryContainer
+                    } else {
+                        MaterialTheme.colorScheme.surfaceVariant
+                    },
+                    animationSpec = Motion.spec(),
+                    label = "turnHighlight",
+                )
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = containerColor),
                 ) {
-                    Text(
-                        text = player.name,
-                        style = MaterialTheme.typography.labelMedium,
-                        maxLines = 1,
-                        fontWeight = if (player.isHuman) FontWeight.Bold else FontWeight.Normal,
-                    )
-                    Text(text = "${player.score}", style = MaterialTheme.typography.titleLarge)
-                    Text(
-                        text = stringResource(R.string.game_cards_left, player.cardCount),
-                        style = MaterialTheme.typography.labelSmall,
+                    Column(
+                        modifier = Modifier.fillMaxWidth().padding(6.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+                        Text(
+                            text = player.name,
+                            style = MaterialTheme.typography.labelMedium,
+                            maxLines = 1,
+                            fontWeight = if (player.isHuman) FontWeight.Bold else FontWeight.Normal,
+                        )
+                        Text(text = "${player.score}", style = MaterialTheme.typography.titleLarge)
+                        Text(
+                            text = stringResource(R.string.game_cards_left, player.cardCount),
+                            style = MaterialTheme.typography.labelSmall,
+                        )
+                    }
+                }
+                // Only opponents can be asked - the human cannot pick themselves.
+                if (!player.isHuman) {
+                    FilterChip(
+                        selected = player.id == selectedOpponentId,
+                        onClick = { onOpponentClick(player.id) },
+                        enabled = canChoose,
+                        modifier = Modifier.padding(top = 4.dp),
+                        label = { Text(stringResource(R.string.game_choose_opponent), maxLines = 1) },
                     )
                 }
             }
@@ -479,39 +500,6 @@ private fun QuartetGroupCard(
                         Text(stringResource(R.string.game_ask_region))
                     }
                 }
-            }
-        }
-    }
-}
-
-@Composable
-private fun OpponentPicker(state: GameUiState.Playing, onOpponentClick: (String) -> Unit) {
-    Column(
-        modifier = Modifier.padding(bottom = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
-    ) {
-        val hint = when {
-            state.selection.quartetId == null -> R.string.game_hint_pick_group
-            state.selection.opponentId == null -> R.string.game_hint_pick_opponent
-            !state.isRegionConfirmed(state.selection.quartetId) -> R.string.game_hint_ask_region
-            else -> R.string.game_hint_pick_country
-        }
-        Text(
-            text = stringResource(hint),
-            style = MaterialTheme.typography.labelMedium,
-        )
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
-        ) {
-            state.opponents.forEach { opponent ->
-                FilterChip(
-                    selected = opponent.id == state.selection.opponentId,
-                    onClick = { onOpponentClick(opponent.id) },
-                    enabled = state.isHumanTurn,
-                    modifier = Modifier.weight(1f),
-                    label = { Text(opponent.name, maxLines = 1) },
-                )
             }
         }
     }

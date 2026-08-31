@@ -24,10 +24,8 @@
     <string name="game_progress">Quartets completed: %1$d of %2$d</string>
     <string name="game_your_cards">Your cards</string>
     <string name="game_your_quartets">Your completed quartets</string>
-    <string name="game_hint_pick_group">Tap a group to work on it.</string>
     <string name="game_hint_pick_country">Pick the country you want:</string>
-    <string name="game_hint_pick_opponent">Ask which player?</string>
-    <string name="game_hint_ask_region">Now tap the button on the group above.</string>
+    <string name="game_choose_opponent">PICK</string>
     <string name="game_ask">ASK</string>
     <string name="game_ask_region">ASK ABOUT THIS GROUP</string>
     <string name="game_cards_left">%1$d cards</string>
