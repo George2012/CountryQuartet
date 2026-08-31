@@ -11,7 +11,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -31,6 +33,7 @@ import com.countryquartet.game.ui.components.CardState
 import com.countryquartet.game.ui.components.CompactCountryCard
 import com.countryquartet.game.ui.components.CountryCard
 import com.countryquartet.game.ui.components.ScreenScaffold
+import com.countryquartet.game.ui.theme.quartetBackground
 import com.countryquartet.game.viewmodel.CountriesUiState
 import com.countryquartet.game.viewmodel.CountriesViewModel
 import com.countryquartet.game.viewmodel.QuartetEntry
@@ -87,7 +90,17 @@ private fun CountriesList(quartets: List<QuartetEntry>, innerPadding: PaddingVal
             )
         }
         items(quartets, key = { it.quartet.id }) { entry ->
-            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            // Same region colour as the game hand, so a quartet is recognisable
+            // in both places.
+            Surface(
+                color = quartetBackground(entry.quartet.id),
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+                modifier = Modifier.padding(10.dp),
+            ) {
                 Text(
                     text = entry.quartet.name,
                     style = MaterialTheme.typography.titleMedium,
@@ -119,6 +132,7 @@ private fun CountriesList(quartets: List<QuartetEntry>, innerPadding: PaddingVal
                         state = CardState.Selected,
                     )
                 }
+            }
             }
         }
     }

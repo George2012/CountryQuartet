@@ -5,6 +5,8 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.foundation.border
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -56,6 +58,7 @@ import com.countryquartet.game.ui.components.LocalAnimationsEnabled
 import com.countryquartet.game.ui.components.Motion
 import com.countryquartet.game.ui.components.ScreenScaffold
 import com.countryquartet.game.ui.theme.CountryQuartetTheme
+import com.countryquartet.game.ui.theme.quartetBackground
 import com.countryquartet.game.viewmodel.GameMessage
 import com.countryquartet.game.viewmodel.GameUiState
 import com.countryquartet.game.viewmodel.GameViewModel
@@ -356,16 +359,31 @@ private fun QuartetGroupCard(
     onQuartetClick: (String) -> Unit,
     onCountryClick: (String) -> Unit,
 ) {
+    // The background now identifies the region, so selection cannot be shown by
+    // swapping the colour: it is an outline and a lift instead.
+    val regionColor by animateColorAsState(
+        targetValue = quartetBackground(group.quartet.id),
+        animationSpec = Motion.spec(),
+        label = "regionBackground",
+    )
+    val outline by animateDpAsState(
+        targetValue = if (isSelected) 3.dp else 0.dp,
+        animationSpec = Motion.spec(),
+        label = "regionOutline",
+    )
     Card(
         onClick = { onQuartetClick(group.quartet.id) },
         enabled = enabled,
-        modifier = modifier,
-        colors = CardDefaults.cardColors(
-            containerColor = if (isSelected) {
-                MaterialTheme.colorScheme.secondaryContainer
+        modifier = modifier.then(
+            if (outline > 0.dp) {
+                Modifier.border(outline, MaterialTheme.colorScheme.primary, CardDefaults.shape)
             } else {
-                MaterialTheme.colorScheme.surfaceVariant
+                Modifier
             },
+        ),
+        colors = CardDefaults.cardColors(containerColor = regionColor),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = if (isSelected) 6.dp else 1.dp,
         ),
     ) {
         Column(

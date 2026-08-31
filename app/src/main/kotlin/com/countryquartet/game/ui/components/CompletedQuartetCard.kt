@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.dp
 import com.countryquartet.game.R
 import com.countryquartet.game.model.Country
 import com.countryquartet.game.model.Quartet
+import com.countryquartet.game.ui.theme.quartetBackground
 
 /**
  * A quartet a player has finished: the four flags stay together and the set is
@@ -32,7 +33,7 @@ fun CompletedQuartetCard(
     Card(
         modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+            containerColor = quartetBackground(quartet.id),
         ),
     ) {
         Column(
