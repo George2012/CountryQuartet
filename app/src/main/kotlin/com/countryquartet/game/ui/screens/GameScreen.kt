@@ -93,6 +93,7 @@ fun GameScreen(
                     onQuartetClick = viewModel::selectQuartet,
                     onCountryClick = viewModel::selectCountry,
                     onOpponentClick = viewModel::selectOpponent,
+                    onAskRegion = viewModel::askRegion,
                     onAsk = viewModel::ask,
                     onPlayAgain = viewModel::startNewGame,
                     onMainMenu = onBack,
@@ -119,6 +120,7 @@ private fun GameContent(
     onQuartetClick: (String) -> Unit,
     onCountryClick: (String) -> Unit,
     onOpponentClick: (String) -> Unit,
+    onAskRegion: () -> Unit,
     onAsk: () -> Unit,
     onPlayAgain: () -> Unit,
     onMainMenu: () -> Unit,
@@ -153,16 +155,11 @@ private fun GameContent(
                 state = state,
                 onQuartetClick = onQuartetClick,
                 onCountryClick = onCountryClick,
+                onAskRegion = onAskRegion,
+                onAsk = onAsk,
                 modifier = Modifier.weight(1f),
             )
             OpponentPicker(state, onOpponentClick)
-            Button(
-                onClick = onAsk,
-                enabled = state.canAsk,
-                modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
-            ) {
-                Text(stringResource(R.string.game_ask))
-            }
         }
     }
 }
@@ -253,8 +250,10 @@ private fun StatusText(turn: String, state: GameUiState.Playing, modifier: Modif
                     style = MaterialTheme.typography.bodyMedium,
                     color = when (message) {
                         is GameMessage.CardRefused -> MaterialTheme.colorScheme.error
+                        is GameMessage.RegionAbsent -> MaterialTheme.colorScheme.error
                         is GameMessage.QuartetCompleted -> MaterialTheme.colorScheme.primary
                         is GameMessage.CardReceived -> MaterialTheme.colorScheme.onSurfaceVariant
+                        is GameMessage.RegionPresent -> MaterialTheme.colorScheme.onSurfaceVariant
                     },
                 )
             }
@@ -298,6 +297,16 @@ private fun messageText(message: GameMessage): String = when (message) {
     } else {
         stringResource(R.string.game_msg_refused, message.targetName, message.countryName)
     }
+    is GameMessage.RegionPresent -> if (message.targetIsHuman) {
+        stringResource(R.string.game_msg_region_present_by_you, message.quartetName)
+    } else {
+        stringResource(R.string.game_msg_region_present, message.targetName, message.quartetName)
+    }
+    is GameMessage.RegionAbsent -> if (message.targetIsHuman) {
+        stringResource(R.string.game_msg_region_absent_by_you, message.quartetName)
+    } else {
+        stringResource(R.string.game_msg_region_absent, message.targetName, message.quartetName)
+    }
     is GameMessage.QuartetCompleted -> stringResource(
         R.string.game_msg_quartet,
         message.playerName,
@@ -310,6 +319,8 @@ private fun HandList(
     state: GameUiState.Playing,
     onQuartetClick: (String) -> Unit,
     onCountryClick: (String) -> Unit,
+    onAskRegion: () -> Unit,
+    onAsk: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     LazyColumn(
@@ -323,14 +334,23 @@ private fun HandList(
             )
         }
         items(state.hand, key = { it.quartet.id }) { group ->
+            val isSelected = group.quartet.id == state.selection.quartetId
             QuartetGroupCard(
                 modifier = if (LocalAnimationsEnabled.current) Modifier.animateItem() else Modifier,
                 group = group,
-                isSelected = group.quartet.id == state.selection.quartetId,
+                isSelected = isSelected,
                 selectedCountryId = state.selection.countryId,
+                regionConfirmed = state.isRegionConfirmed(group.quartet.id),
                 enabled = state.isHumanTurn,
+                // The ask buttons only ever apply to the selected card, so the
+                // rest of the hand does not need to care whether asking is
+                // currently possible.
+                canAskRegion = isSelected && state.canAskRegion,
+                canAsk = isSelected && state.canAsk,
                 onQuartetClick = onQuartetClick,
                 onCountryClick = onCountryClick,
+                onAskRegion = onAskRegion,
+                onAsk = onAsk,
             )
         }
         if (state.humanCompletedQuartets.isNotEmpty()) {
@@ -355,9 +375,14 @@ private fun QuartetGroupCard(
     group: QuartetGroup,
     isSelected: Boolean,
     selectedCountryId: String?,
+    regionConfirmed: Boolean,
     enabled: Boolean,
+    canAskRegion: Boolean,
+    canAsk: Boolean,
     onQuartetClick: (String) -> Unit,
     onCountryClick: (String) -> Unit,
+    onAskRegion: () -> Unit,
+    onAsk: () -> Unit,
 ) {
     // The background now identifies the region, so selection cannot be shown by
     // swapping the colour: it is an outline and a lift instead.
@@ -408,29 +433,50 @@ private fun QuartetGroupCard(
                 }
             }
             if (isSelected) {
-                Text(
-                    text = stringResource(R.string.game_hint_pick_country),
-                    style = MaterialTheme.typography.labelSmall,
-                )
-                FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    verticalArrangement = Arrangement.spacedBy(6.dp),
-                ) {
-                    group.missing.forEach { country ->
-                        CompactCountryCard(
-                            countryId = country.id,
-                            name = country.name,
-                            // Cards you do not hold yet show their capital too:
-                            // it keeps every card the same height and there is
-                            // something to learn while choosing.
-                            capital = country.capital,
-                            state = when {
-                                !enabled -> CardState.Disabled
-                                country.id == selectedCountryId -> CardState.Selected
-                                else -> CardState.Normal
-                            },
-                            onClick = { onCountryClick(country.id) },
-                        )
+                if (regionConfirmed) {
+                    Text(
+                        text = stringResource(R.string.game_hint_pick_country),
+                        style = MaterialTheme.typography.labelSmall,
+                    )
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalArrangement = Arrangement.spacedBy(6.dp),
+                    ) {
+                        group.missing.forEach { country ->
+                            CompactCountryCard(
+                                countryId = country.id,
+                                name = country.name,
+                                // Cards you do not hold yet show their capital too:
+                                // it keeps every card the same height and there is
+                                // something to learn while choosing.
+                                capital = country.capital,
+                                state = when {
+                                    !enabled -> CardState.Disabled
+                                    country.id == selectedCountryId -> CardState.Selected
+                                    else -> CardState.Normal
+                                },
+                                onClick = { onCountryClick(country.id) },
+                            )
+                        }
+                    }
+                    Button(
+                        onClick = onAsk,
+                        enabled = canAsk,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text(stringResource(R.string.game_ask))
+                    }
+                } else {
+                    // The specific countries stay hidden - and unaskable -
+                    // until the asked player has confirmed they hold the
+                    // group at all. Picking a player is done below; this
+                    // button only lights up once one is picked.
+                    Button(
+                        onClick = onAskRegion,
+                        enabled = canAskRegion,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text(stringResource(R.string.game_ask_region))
                     }
                 }
             }
@@ -440,15 +486,18 @@ private fun QuartetGroupCard(
 
 @Composable
 private fun OpponentPicker(state: GameUiState.Playing, onOpponentClick: (String) -> Unit) {
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+    Column(
+        modifier = Modifier.padding(bottom = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        val hint = when {
+            state.selection.quartetId == null -> R.string.game_hint_pick_group
+            state.selection.opponentId == null -> R.string.game_hint_pick_opponent
+            !state.isRegionConfirmed(state.selection.quartetId) -> R.string.game_hint_ask_region
+            else -> R.string.game_hint_pick_country
+        }
         Text(
-            text = stringResource(
-                if (state.selection.quartetId == null) {
-                    R.string.game_hint_pick_group
-                } else {
-                    R.string.game_hint_pick_opponent
-                },
-            ),
+            text = stringResource(hint),
             style = MaterialTheme.typography.labelMedium,
         )
         Row(

@@ -99,6 +99,53 @@ class GameEngine(
         )
     }
 
+    /**
+     * The current player asks [targetPlayerId] whether they hold any card of
+     * [quartetId] at all, without yet naming a country.
+     *
+     * A "no" ends the turn just like a failed [ask]; a "yes" leaves the turn
+     * with the asking player so they can follow up with [ask].
+     *
+     * @throws IllegalMoveException if the request breaks a rule.
+     */
+    fun askRegion(state: GameState, targetPlayerId: String, quartetId: String): RegionResult {
+        requireLegalRegion(state, targetPlayerId, quartetId)
+
+        val askingIndex = state.currentPlayerIndex
+        val asking = state.players[askingIndex]
+        val targetIndex = state.players.indexOfFirst { it.id == targetPlayerId }
+        val target = state.players[targetIndex]
+
+        val present = target.cards.any { gameData.country(it).quartetId == quartetId }
+        if (!present) {
+            // Losing the turn is paid for with one card from the draw pile,
+            // exactly as a failed card request is.
+            val afterDraw = drawCard(state, askingIndex)
+            return RegionResult(
+                state = beginTurn(settle(advanceTurn(afterDraw))),
+                outcome = RegionOutcome.Absent(
+                    askingPlayerId = asking.id,
+                    targetPlayerId = target.id,
+                    quartetId = quartetId,
+                    drewFromDeck = afterDraw.deckCount < state.deckCount,
+                ),
+            )
+        }
+
+        return RegionResult(
+            state = state,
+            outcome = RegionOutcome.Present(
+                askingPlayerId = asking.id,
+                targetPlayerId = target.id,
+                quartetId = quartetId,
+            ),
+        )
+    }
+
+    /** Whether the current player may ask [targetPlayerId] about [quartetId]. */
+    fun isLegalRegionRequest(state: GameState, targetPlayerId: String, quartetId: String): Boolean =
+        illegalRegionReason(state, targetPlayerId, quartetId) == null
+
     /** Every request the current player is allowed to make right now. */
     fun legalRequests(state: GameState): List<CardRequest> {
         if (state.isFinished) return emptyList()
@@ -147,6 +194,25 @@ class GameEngine(
         }
         if (country.quartetId !in representedQuartets(asking)) {
             return "${asking.name} holds no card of quartet ${country.quartetId}"
+        }
+        return null
+    }
+
+    private fun requireLegalRegion(state: GameState, targetPlayerId: String, quartetId: String) {
+        illegalRegionReason(state, targetPlayerId, quartetId)?.let { throw IllegalMoveException(it) }
+    }
+
+    private fun illegalRegionReason(state: GameState, targetPlayerId: String, quartetId: String): String? {
+        if (state.isFinished) return "The game is already finished"
+        gameData.quartetOrNull(quartetId) ?: return "Unknown quartet: $quartetId"
+        val asking = state.currentPlayer
+        if (targetPlayerId == asking.id) return "A player cannot ask themselves"
+        state.playerOrNull(targetPlayerId) ?: return "Unknown player: $targetPlayerId"
+        if (state.players.any { quartetId in it.completedQuartets }) {
+            return "Quartet $quartetId is already completed"
+        }
+        if (quartetId !in representedQuartets(asking)) {
+            return "${asking.name} holds no card of quartet $quartetId"
         }
         return null
     }

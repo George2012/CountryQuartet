@@ -52,3 +52,43 @@ data class TurnResult(
     val state: GameState,
     val outcome: RequestOutcome,
 )
+
+/**
+ * What happened when a player asked an opponent whether they hold any card of
+ * a whole quartet, the step that now comes before naming a specific country.
+ */
+sealed interface RegionOutcome {
+
+    val askingPlayerId: String
+    val targetPlayerId: String
+    val quartetId: String
+
+    /**
+     * The opponent holds at least one card of the quartet. The turn continues
+     * and the asking player may now name a specific country to request.
+     */
+    data class Present(
+        override val askingPlayerId: String,
+        override val targetPlayerId: String,
+        override val quartetId: String,
+    ) : RegionOutcome
+
+    /**
+     * The opponent holds none of the quartet, so the turn moves on - exactly
+     * like a failed card request.
+     *
+     * [drewFromDeck] is false once the draw pile has run out.
+     */
+    data class Absent(
+        override val askingPlayerId: String,
+        override val targetPlayerId: String,
+        override val quartetId: String,
+        val drewFromDeck: Boolean = false,
+    ) : RegionOutcome
+}
+
+/** The state after a region check together with what it revealed. */
+data class RegionResult(
+    val state: GameState,
+    val outcome: RegionOutcome,
+)

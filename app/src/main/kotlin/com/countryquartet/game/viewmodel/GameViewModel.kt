@@ -11,6 +11,7 @@ import com.countryquartet.game.ai.AiStrategy
 import com.countryquartet.game.ai.BasicAi
 import com.countryquartet.game.data.AssetGameDataSource
 import com.countryquartet.game.game.GameEngine
+import com.countryquartet.game.game.RegionOutcome
 import com.countryquartet.game.game.RequestOutcome
 import com.countryquartet.game.model.GameData
 import com.countryquartet.game.model.GameState
@@ -110,19 +111,47 @@ class GameViewModel(
         publish()
     }
 
+    /**
+     * Asks the selected opponent whether they hold any card of the selected
+     * quartet at all. This has to happen, and come back "yes", before a
+     * specific country can be asked for.
+     */
+    fun askRegion() {
+        val current = game ?: return
+        val quartetId = selection.quartetId ?: return
+        val opponentId = selection.opponentId ?: return
+        if (!isHumanTurn() || !engine.isLegalRegionRequest(current, opponentId, quartetId)) return
+
+        val result = engine.askRegion(current, opponentId, quartetId)
+        game = result.state
+        message = describeRegion(current, result.outcome)
+        selection = when (result.outcome) {
+            is RegionOutcome.Present -> selection.copy(
+                confirmedRegions = selection.confirmedRegions + (opponentId to quartetId),
+            )
+            is RegionOutcome.Absent -> Selection()
+        }
+        publish()
+        continueWithAi()
+    }
+
     /** Asks the selected opponent for the selected country. */
     fun ask() {
         val current = game ?: return
         val countryId = selection.countryId ?: return
         val opponentId = selection.opponentId ?: return
-        if (!isHumanTurn() || !engine.isLegalRequest(current, opponentId, countryId)) return
+        val quartetId = gameData.country(countryId).quartetId
+        if (!isHumanTurn() ||
+            (opponentId to quartetId) !in selection.confirmedRegions ||
+            !engine.isLegalRequest(current, opponentId, countryId)
+        ) return
 
         val result = engine.ask(current, opponentId, countryId)
         game = result.state
         message = describe(current, result.outcome)
         selection = when (result.outcome) {
             // The card is now owned, so the pick is cleared but the quartet
-            // stays selected while the human keeps the turn.
+            // and the confirmed regions stay while the human keeps the turn.
             is RequestOutcome.Success -> selection.copy(
                 quartetId = selection.quartetId.takeIf { id ->
                     result.state.players.first { it.isHuman }.cards.any { card ->
@@ -142,18 +171,45 @@ class GameViewModel(
         return !current.isFinished && current.currentPlayer.isHuman
     }
 
-    /** Plays computer turns until it is the human's turn again or the game ends. */
+    /**
+     * Plays computer turns until it is the human's turn again or the game
+     * ends. Each request is played out in the same two steps a human takes:
+     * a region check, then the specific card - unless this AI already
+     * confirmed that opponent holds that region earlier in the same turn.
+     */
     private fun continueWithAi() {
         aiTurns?.cancel()
         aiTurns = viewModelScope.launch {
+            val confirmedThisTurn = mutableSetOf<Pair<String, String>>()
+            var lastAsker: String? = null
             while (true) {
                 val current = game ?: return@launch
                 if (current.isFinished || current.currentPlayer.isHuman) return@launch
-                delay(aiThinkingDelay())
+                if (current.currentPlayer.id != lastAsker) {
+                    confirmedThisTurn.clear()
+                    lastAsker = current.currentPlayer.id
+                }
+
                 val request = ai.chooseRequest(engine, current)
-                val result = engine.ask(current, request.targetPlayerId, request.countryId)
+                val quartetId = gameData.country(request.countryId).quartetId
+                val pair = request.targetPlayerId to quartetId
+
+                var stateForCountryAsk = current
+                if (pair !in confirmedThisTurn) {
+                    delay(aiThinkingDelay())
+                    val regionResult = engine.askRegion(current, request.targetPlayerId, quartetId)
+                    game = regionResult.state
+                    message = describeRegion(current, regionResult.outcome)
+                    publish()
+                    if (regionResult.outcome is RegionOutcome.Absent) continue
+                    confirmedThisTurn += pair
+                    stateForCountryAsk = regionResult.state
+                }
+
+                delay(aiThinkingDelay())
+                val result = engine.ask(stateForCountryAsk, request.targetPlayerId, request.countryId)
                 game = result.state
-                message = describe(current, result.outcome)
+                message = describe(stateForCountryAsk, result.outcome)
                 publish()
             }
         }
@@ -182,6 +238,27 @@ class GameViewModel(
                 targetName = targetPlayer.name,
                 countryName = country,
                 askerIsHuman = askingPlayer.isHuman,
+                targetIsHuman = targetPlayer.isHuman,
+            )
+        }
+    }
+
+    /** Describes a region check using the names known before the move was applied. */
+    private fun describeRegion(before: GameState, outcome: RegionOutcome): GameMessage {
+        val askingPlayer = before.player(outcome.askingPlayerId)
+        val targetPlayer = before.player(outcome.targetPlayerId)
+        val quartet = gameData.quartet(outcome.quartetId).name
+        return when (outcome) {
+            is RegionOutcome.Absent -> GameMessage.RegionAbsent(
+                askerName = askingPlayer.name,
+                targetName = targetPlayer.name,
+                quartetName = quartet,
+                targetIsHuman = targetPlayer.isHuman,
+            )
+            is RegionOutcome.Present -> GameMessage.RegionPresent(
+                askerName = askingPlayer.name,
+                targetName = targetPlayer.name,
+                quartetName = quartet,
                 targetIsHuman = targetPlayer.isHuman,
             )
         }

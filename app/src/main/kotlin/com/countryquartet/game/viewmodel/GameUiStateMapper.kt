@@ -35,9 +35,22 @@ internal fun playingState(
         .sortedWith(compareByDescending<QuartetGroup> { it.owned.size }.thenBy { it.quartet.name })
 
     val isHumanTurn = !game.isFinished && game.currentPlayer.isHuman
+    // Whether the (opponent, quartet) pair currently picked has already been
+    // confirmed present this turn - derived from the country when one is
+    // picked, so it stays correct even if selection.quartetId lags behind.
+    val selectedQuartetId = selection.countryId?.let { gameData.country(it).quartetId } ?: selection.quartetId
+    val regionConfirmed = selection.opponentId != null &&
+        selectedQuartetId != null &&
+        (selection.opponentId to selectedQuartetId) in selection.confirmedRegions
+    val canAskRegion = isHumanTurn &&
+        selection.quartetId != null &&
+        selection.opponentId != null &&
+        !regionConfirmed &&
+        engine.isLegalRegionRequest(game, selection.opponentId, selection.quartetId)
     val canAsk = isHumanTurn &&
         selection.countryId != null &&
         selection.opponentId != null &&
+        regionConfirmed &&
         engine.isLegalRequest(game, selection.opponentId, selection.countryId)
 
     return GameUiState.Playing(
@@ -65,6 +78,7 @@ internal fun playingState(
         currentPlayerName = game.currentPlayer.name,
         isHumanTurn = isHumanTurn,
         selection = selection,
+        canAskRegion = canAskRegion,
         canAsk = canAsk,
         message = message,
         animationsEnabled = animationsEnabled,

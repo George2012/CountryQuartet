@@ -8,6 +8,13 @@ data class Selection(
     val quartetId: String? = null,
     val countryId: String? = null,
     val opponentId: String? = null,
+    /**
+     * (opponentId, quartetId) pairs the current player has already confirmed
+     * hold at least one card, so asking for a specific country from that pair
+     * does not need to ask about the region again first. Cleared whenever the
+     * turn passes to someone else.
+     */
+    val confirmedRegions: Set<Pair<String, String>> = emptySet(),
 )
 
 /** One quartet the human holds cards of, split into owned and still missing. */
@@ -53,6 +60,22 @@ sealed interface GameMessage {
         val targetIsHuman: Boolean,
     ) : GameMessage
 
+    /** The asked player confirmed they hold at least one card of the region. */
+    data class RegionPresent(
+        val askerName: String,
+        val targetName: String,
+        val quartetName: String,
+        val targetIsHuman: Boolean,
+    ) : GameMessage
+
+    /** The asked player holds none of the region, so the turn is over. */
+    data class RegionAbsent(
+        val askerName: String,
+        val targetName: String,
+        val quartetName: String,
+        val targetIsHuman: Boolean,
+    ) : GameMessage
+
     data class QuartetCompleted(
         val playerName: String,
         val quartet: Quartet,
@@ -80,12 +103,21 @@ sealed interface GameUiState {
         val currentPlayerName: String,
         val isHumanTurn: Boolean,
         val selection: Selection,
+        /** Whether the region step can be asked: a quartet and opponent are picked, but not yet confirmed. */
+        val canAskRegion: Boolean,
+        /** Whether the specific card can be asked: the region is confirmed and a country is picked. */
         val canAsk: Boolean,
         val message: GameMessage?,
         val animationsEnabled: Boolean,
         val isFinished: Boolean,
         val winnerNames: List<String>,
     ) : GameUiState {
+
+        /** Whether the opponent currently picked has confirmed holding a card of [quartetId] this turn. */
+        fun isRegionConfirmed(quartetId: String): Boolean {
+            val opponentId = selection.opponentId ?: return false
+            return (opponentId to quartetId) in selection.confirmedRegions
+        }
 
         /** The three opponents, in seating order. */
         val opponents: List<PlayerStanding> get() = standings.filterNot { it.isHuman }

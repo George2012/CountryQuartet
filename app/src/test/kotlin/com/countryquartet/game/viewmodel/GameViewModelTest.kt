@@ -88,19 +88,83 @@ class GameViewModelTest {
     }
 
     @Test
-    fun `selecting a group, country and opponent enables asking`() = runTest {
+    fun `selecting a group and opponent enables asking the region`() = runTest {
         val viewModel = newViewModel()
         advanceUntilIdle()
 
         val group = viewModel.playing.hand.first()
         viewModel.selectQuartet(group.quartet.id)
         assertEquals(group.quartet.id, viewModel.playing.selection.quartetId)
+        assertFalse(viewModel.playing.canAskRegion)
         assertFalse(viewModel.playing.canAsk)
 
-        viewModel.selectCountry(group.missing.first().id)
         viewModel.selectOpponent(viewModel.playing.opponents.first().id)
 
-        assertTrue(viewModel.playing.canAsk)
+        assertTrue(viewModel.playing.canAskRegion)
+        // The specific country cannot be asked until the region comes back present.
+        assertFalse(viewModel.playing.canAsk)
+    }
+
+    @Test
+    fun `a present region unlocks asking the specific country`() = runTest {
+        val viewModel = newViewModel()
+        advanceUntilIdle()
+
+        val group = viewModel.playing.hand.first()
+        viewModel.selectQuartet(group.quartet.id)
+        viewModel.selectOpponent(viewModel.playing.opponents.first().id)
+        viewModel.askRegion()
+
+        if (viewModel.playing.isRegionConfirmed(group.quartet.id)) {
+            assertFalse(viewModel.playing.canAskRegion)
+            viewModel.selectCountry(viewModel.playing.selectedGroup!!.missing.first().id)
+            assertTrue(viewModel.playing.canAsk)
+        } else {
+            // The region was absent: the turn moved on and the pick was cleared.
+            assertEquals(null, viewModel.playing.selection.quartetId)
+        }
+    }
+
+    @Test
+    fun `asking the specific country without confirming the region first does nothing`() = runTest {
+        val viewModel = newViewModel()
+        advanceUntilIdle()
+        val before = viewModel.playing
+
+        val group = viewModel.playing.hand.first()
+        viewModel.selectQuartet(group.quartet.id)
+        viewModel.selectCountry(group.missing.first().id)
+        viewModel.selectOpponent(viewModel.playing.opponents.first().id)
+        assertTrue(viewModel.playing.canAskRegion)
+        assertFalse(viewModel.playing.canAsk)
+
+        viewModel.ask()
+        advanceUntilIdle()
+
+        assertEquals(before.standings, viewModel.playing.standings)
+        assertEquals(null, viewModel.playing.message)
+    }
+
+    @Test
+    fun `asking the region never transfers a card - a present region changes nothing, an absent one only draws a consolation card`() = runTest {
+        val viewModel = newViewModel()
+        advanceUntilIdle()
+        val ownedBefore = viewModel.playing.hand.sumOf { it.owned.size }
+
+        val group = viewModel.playing.hand.first()
+        viewModel.selectQuartet(group.quartet.id)
+        viewModel.selectOpponent(viewModel.playing.opponents.first().id)
+        viewModel.askRegion()
+
+        val ownedAfter = viewModel.playing.hand.sumOf { it.owned.size }
+        if (viewModel.playing.isRegionConfirmed(group.quartet.id)) {
+            assertEquals(ownedBefore, ownedAfter)
+        } else {
+            // Absent: the human drew a consolation card, exactly like a
+            // failed specific-card request would.
+            assertEquals(ownedBefore + 1, ownedAfter)
+        }
+        assertNotNull(viewModel.playing.message)
     }
 
     @Test
@@ -143,16 +207,27 @@ class GameViewModelTest {
             if (state.selection.quartetId != group.quartet.id) {
                 viewModel.selectQuartet(group.quartet.id)
             }
-            val selected = requireNotNull(viewModel.playing.selectedGroup) {
-                "group ${group.quartet.id} should be selected"
-            }
-            viewModel.selectCountry(selected.missing.first().id)
             // Selecting is a toggle, and a successful ask keeps the opponent
             // picked, so tapping the same one again would clear it.
             val opponent = state.opponents.first().id
             if (viewModel.playing.selection.opponentId != opponent) {
                 viewModel.selectOpponent(opponent)
             }
+
+            if (!viewModel.playing.isRegionConfirmed(group.quartet.id)) {
+                viewModel.askRegion()
+                advanceUntilIdle()
+                // A "no" ends the turn - and by the time the computer players
+                // are done, play may already be back with the human on a
+                // fresh selection, so check confirmation rather than whose
+                // turn it is.
+                if (!viewModel.playing.isRegionConfirmed(group.quartet.id)) continue
+            }
+
+            val selected = requireNotNull(viewModel.playing.selectedGroup) {
+                "group ${group.quartet.id} should be selected"
+            }
+            viewModel.selectCountry(selected.missing.first().id)
             assertTrue("nothing to ask with", viewModel.playing.canAsk)
 
             viewModel.ask()
@@ -175,13 +250,12 @@ class GameViewModelTest {
         val seen = mutableListOf<GameMessage>()
 
         var moves = 0
-        while (!viewModel.playing.isFinished && moves++ < 500) {
+        while (!viewModel.playing.isFinished && moves++ < 800) {
             val state = viewModel.playing
             val group = state.hand.first()
             if (state.selection.quartetId != group.quartet.id) {
                 viewModel.selectQuartet(group.quartet.id)
             }
-            viewModel.selectCountry(viewModel.playing.selectedGroup!!.missing.first().id)
             // Rotate through the opponents; always asking the same one can go a
             // whole game without a single hit. Skip when already selected,
             // because selecting is a toggle.
@@ -190,6 +264,19 @@ class GameViewModelTest {
                 viewModel.selectOpponent(opponent)
             }
 
+            if (!viewModel.playing.isRegionConfirmed(group.quartet.id)) {
+                viewModel.askRegion()
+                viewModel.playing.message?.let { seen += it }
+                advanceUntilIdle()
+                viewModel.playing.message?.let { seen += it }
+                // A "no" ends the turn - and by the time the computer players
+                // are done, play may already be back with the human on a
+                // fresh selection, so check confirmation rather than whose
+                // turn it is.
+                if (!viewModel.playing.isRegionConfirmed(group.quartet.id)) continue
+            }
+
+            viewModel.selectCountry(viewModel.playing.selectedGroup!!.missing.first().id)
             viewModel.ask()
             // Sampled before the computer turns run, so this is the human move.
             // A StateFlow conflates, so collecting it would drop messages.
@@ -262,7 +349,10 @@ class GameViewModelTest {
         assertFalse(viewModel.playing.animationsEnabled)
     }
 
-    /** Plays [count] human turns, letting the computer players finish each time. */
+    /**
+     * Plays [count] human turns, asking about the region first whenever it is
+     * not already confirmed, and letting the computer players finish each time.
+     */
     private fun TestScope.playHumanTurns(
         viewModel: GameViewModel,
         count: Int,
@@ -274,11 +364,22 @@ class GameViewModelTest {
             if (state.selection.quartetId != group.quartet.id) {
                 viewModel.selectQuartet(group.quartet.id)
             }
-            viewModel.selectCountry(viewModel.playing.selectedGroup!!.missing.first().id)
             val opponent = state.opponents[move % state.opponents.size].id
             if (viewModel.playing.selection.opponentId != opponent) {
                 viewModel.selectOpponent(opponent)
             }
+
+            if (!viewModel.playing.isRegionConfirmed(group.quartet.id)) {
+                viewModel.askRegion()
+                advanceUntilIdle()
+                // A "no" ends the turn - and by the time the computer players
+                // are done, play may already be back with the human on a
+                // fresh selection, so check confirmation rather than whose
+                // turn it is.
+                if (!viewModel.playing.isRegionConfirmed(group.quartet.id)) return@repeat
+            }
+
+            viewModel.selectCountry(viewModel.playing.selectedGroup!!.missing.first().id)
             viewModel.ask()
             advanceUntilIdle()
         }

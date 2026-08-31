@@ -69,13 +69,38 @@ class GameUiStateMapperTest {
     }
 
     @Test
-    fun `asking is only possible with a legal country and opponent picked`() {
+    fun `asking the region is only possible with a legal quartet and opponent picked, not yet confirmed`() {
         val state = TestGame.stateOf(listOf("se"), listOf("no"), listOf("dk"), listOf("fi"))
 
+        assertFalse(map(state).canAskRegion)
+        assertFalse(map(state, Selection(quartetId = "nordic_countries")).canAskRegion)
+        assertFalse(map(state, Selection(opponentId = "p1")).canAskRegion)
+        assertTrue(
+            map(state, Selection(quartetId = "nordic_countries", opponentId = "p1")).canAskRegion,
+        )
+        // Already confirmed this turn: nothing left to ask about the region.
+        assertFalse(
+            map(
+                state,
+                Selection(
+                    quartetId = "nordic_countries",
+                    opponentId = "p1",
+                    confirmedRegions = setOf("p1" to "nordic_countries"),
+                ),
+            ).canAskRegion,
+        )
+    }
+
+    @Test
+    fun `asking the country is only possible once its region is confirmed`() {
+        val state = TestGame.stateOf(listOf("se"), listOf("no"), listOf("dk"), listOf("fi"))
+        val confirmed = setOf("p1" to "nordic_countries")
+
         assertFalse(map(state).canAsk)
-        assertFalse(map(state, Selection(countryId = "no")).canAsk)
-        assertFalse(map(state, Selection(opponentId = "p1")).canAsk)
-        assertTrue(map(state, Selection(countryId = "no", opponentId = "p1")).canAsk)
+        assertFalse(map(state, Selection(countryId = "no", opponentId = "p1")).canAsk)
+        assertTrue(
+            map(state, Selection(countryId = "no", opponentId = "p1", confirmedRegions = confirmed)).canAsk,
+        )
     }
 
     @Test
@@ -83,7 +108,13 @@ class GameUiStateMapperTest {
         val state = TestGame.stateOf(listOf("se"), listOf("jp"), listOf("dk"), listOf("fi"))
 
         // Japan belongs to a quartet the human holds no card of.
-        assertFalse(map(state, Selection(countryId = "jp", opponentId = "p1")).canAsk)
+        assertFalse(map(state, Selection(quartetId = "east_asia", opponentId = "p1")).canAskRegion)
+        assertFalse(
+            map(
+                state,
+                Selection(countryId = "jp", opponentId = "p1", confirmedRegions = setOf("p1" to "east_asia")),
+            ).canAsk,
+        )
     }
 
     @Test
