@@ -53,6 +53,8 @@ class GameViewModel(
     private var game: GameState? = null
     private var selection = Selection()
     private var message: GameMessage? = null
+    /** Every message shown so far this game, most recent first. */
+    private var history: List<GameMessage> = emptyList()
     private var aiTurns: Job? = null
 
     /** Guards against counting the same finished game more than once. */
@@ -72,6 +74,7 @@ class GameViewModel(
         aiTurns?.cancel()
         selection = Selection()
         message = null
+        history = emptyList()
         finishRecorded = false
         try {
             if (!::gameData.isInitialized) {
@@ -124,7 +127,7 @@ class GameViewModel(
 
         val result = engine.askRegion(current, opponentId, quartetId)
         game = result.state
-        message = describeRegion(current, result.outcome)
+        record(describeRegion(current, result.outcome))
         selection = when (result.outcome) {
             is RegionOutcome.Present -> selection.copy(
                 confirmedRegions = selection.confirmedRegions + (opponentId to quartetId),
@@ -148,7 +151,7 @@ class GameViewModel(
 
         val result = engine.ask(current, opponentId, countryId)
         game = result.state
-        message = describe(current, result.outcome)
+        record(describe(current, result.outcome))
         selection = when (result.outcome) {
             // The card is now owned, so the pick is cleared but the quartet
             // and the confirmed regions stay while the human keeps the turn.
@@ -199,7 +202,7 @@ class GameViewModel(
                     delay(aiThinkingDelay())
                     val regionResult = engine.askRegion(current, request.targetPlayerId, quartetId)
                     game = regionResult.state
-                    message = describeRegion(current, regionResult.outcome)
+                    record(describeRegion(current, regionResult.outcome))
                     publish()
                     if (regionResult.outcome is RegionOutcome.Absent) continue
                     confirmedThisTurn += pair
@@ -209,7 +212,7 @@ class GameViewModel(
                 delay(aiThinkingDelay())
                 val result = engine.ask(stateForCountryAsk, request.targetPlayerId, request.countryId)
                 game = result.state
-                message = describe(stateForCountryAsk, result.outcome)
+                record(describe(stateForCountryAsk, result.outcome))
                 publish()
             }
         }
@@ -264,6 +267,12 @@ class GameViewModel(
         }
     }
 
+    /** Sets the current message and appends it to the game's history. */
+    private fun record(msg: GameMessage) {
+        message = msg
+        history = listOf(msg) + history
+    }
+
     private fun publish() {
         val current = game ?: return
         recordFinishedGame(current)
@@ -273,6 +282,7 @@ class GameViewModel(
             game = current,
             selection = selection,
             message = message,
+            history = history,
             animationsEnabled = settings.settings.value.animationsEnabled,
         )
     }

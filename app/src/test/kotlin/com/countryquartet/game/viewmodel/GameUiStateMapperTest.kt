@@ -15,7 +15,8 @@ class GameUiStateMapperTest {
         state: com.countryquartet.game.model.GameState,
         selection: Selection = Selection(),
         message: GameMessage? = null,
-    ) = playingState(engine, gameData, state, selection, message)
+        history: List<GameMessage> = emptyList(),
+    ) = playingState(engine, gameData, state, selection, message, history)
 
     @Test
     fun `the hand is grouped by quartet with owned and missing countries`() {
@@ -115,6 +116,17 @@ class GameUiStateMapperTest {
                 Selection(countryId = "jp", opponentId = "p1", confirmedRegions = setOf("p1" to "east_asia")),
             ).canAsk,
         )
+    }
+
+    @Test
+    fun `the history is exposed as given, most recent entry first`() {
+        val state = TestGame.stateOf(listOf("se"), listOf("no"), listOf("dk"), listOf("fi"))
+        val history = listOf(
+            GameMessage.CardReceived("Player 0", "Player 1", "Norway", askerIsHuman = true, targetIsHuman = false),
+            GameMessage.CardRefused("Player 0", "Player 2", "Denmark", targetIsHuman = false),
+        )
+
+        assertEquals(history, map(state, history = history).history)
     }
 
     @Test

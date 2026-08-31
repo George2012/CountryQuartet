@@ -461,4 +461,44 @@ class GameViewModelTest {
         )
         assertTrue("a reshuffle should not be impossible", first.isNotEmpty())
     }
+
+    @Test
+    fun `history accumulates every message, most recent first`() = runTest {
+        val viewModel = newViewModel()
+        advanceUntilIdle()
+        assertEquals(emptyList<GameMessage>(), viewModel.playing.history)
+
+        val group = viewModel.playing.hand.first()
+        viewModel.selectQuartet(group.quartet.id)
+        viewModel.selectOpponent(viewModel.playing.opponents.first().id)
+        viewModel.askRegion()
+
+        val firstMessage = viewModel.playing.message
+        assertNotNull(firstMessage)
+        assertEquals(listOf(firstMessage), viewModel.playing.history)
+
+        advanceUntilIdle()
+        // Whatever the computer players did next only ever prepends to the
+        // history - it never drops what came before.
+        val historyAfterAiTurns = viewModel.playing.history
+        assertTrue(historyAfterAiTurns.contains(firstMessage))
+        assertEquals(viewModel.playing.message, historyAfterAiTurns.first())
+    }
+
+    @Test
+    fun `play again clears the history`() = runTest {
+        val viewModel = newViewModel()
+        advanceUntilIdle()
+        val group = viewModel.playing.hand.first()
+        viewModel.selectQuartet(group.quartet.id)
+        viewModel.selectOpponent(viewModel.playing.opponents.first().id)
+        viewModel.askRegion()
+        advanceUntilIdle()
+        assertTrue(viewModel.playing.history.isNotEmpty())
+
+        viewModel.startNewGame()
+        advanceUntilIdle()
+
+        assertEquals(emptyList<GameMessage>(), viewModel.playing.history)
+    }
 }

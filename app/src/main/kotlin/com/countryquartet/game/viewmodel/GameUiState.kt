@@ -108,6 +108,8 @@ sealed interface GameUiState {
         /** Whether the specific card can be asked: the region is confirmed and a country is picked. */
         val canAsk: Boolean,
         val message: GameMessage?,
+        /** Every action taken so far this game, most recent first. */
+        val history: List<GameMessage>,
         val animationsEnabled: Boolean,
         val isFinished: Boolean,
         val winnerNames: List<String>,

@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -29,9 +30,11 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -41,12 +44,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.countryquartet.game.R
@@ -125,6 +130,8 @@ private fun GameContent(
     onPlayAgain: () -> Unit,
     onMainMenu: () -> Unit,
 ) {
+    var showHistory by remember { mutableStateOf(false) }
+
     Column(
         modifier = Modifier.fillMaxSize().padding(innerPadding).padding(horizontal = 12.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -135,7 +142,7 @@ private fun GameContent(
             canChoose = state.isHumanTurn,
             onOpponentClick = onOpponentClick,
         )
-        StatusLine(state)
+        StatusLine(state, onHistoryClick = { showHistory = true })
         QuartetCompletedBanner(state.justCompletedQuartet)
 
         if (state.isFinished) {
@@ -165,6 +172,10 @@ private fun GameContent(
                 modifier = Modifier.weight(1f),
             )
         }
+    }
+
+    if (showHistory) {
+        HistoryDialog(history = state.history, onDismiss = { showHistory = false })
     }
 }
 
@@ -229,7 +240,7 @@ private fun ScoreBoard(
 }
 
 @Composable
-private fun StatusLine(state: GameUiState.Playing) {
+private fun StatusLine(state: GameUiState.Playing, onHistoryClick: () -> Unit) {
     val turn = if (state.isHumanTurn) {
         stringResource(R.string.game_turn_yours)
     } else {
@@ -240,16 +251,32 @@ private fun StatusLine(state: GameUiState.Playing) {
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        StatusText(turn = turn, state = state, modifier = Modifier.weight(1f))
+        StatusText(
+            turn = turn,
+            state = state,
+            onHistoryClick = onHistoryClick,
+            modifier = Modifier.weight(1f),
+        )
         DeckPile(count = state.deckCount)
     }
 }
 
 @Composable
-private fun StatusText(turn: String, state: GameUiState.Playing, modifier: Modifier = Modifier) {
+private fun StatusText(
+    turn: String,
+    state: GameUiState.Playing,
+    onHistoryClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Column(modifier = modifier) {
         if (!state.isFinished) {
             Text(text = turn, style = MaterialTheme.typography.titleMedium)
+            TextButton(
+                onClick = onHistoryClick,
+                contentPadding = PaddingValues(horizontal = 0.dp, vertical = 4.dp),
+            ) {
+                Text(stringResource(R.string.game_history), style = MaterialTheme.typography.labelMedium)
+            }
         }
         // The message is the only place a player learns what happened, so it
         // changes with a short cross fade and is tinted by the outcome.
@@ -269,13 +296,7 @@ private fun StatusText(turn: String, state: GameUiState.Playing, modifier: Modif
                 Text(
                     text = messageText(message),
                     style = MaterialTheme.typography.bodyMedium,
-                    color = when (message) {
-                        is GameMessage.CardRefused -> MaterialTheme.colorScheme.error
-                        is GameMessage.RegionAbsent -> MaterialTheme.colorScheme.error
-                        is GameMessage.QuartetCompleted -> MaterialTheme.colorScheme.primary
-                        is GameMessage.CardReceived -> MaterialTheme.colorScheme.onSurfaceVariant
-                        is GameMessage.RegionPresent -> MaterialTheme.colorScheme.onSurfaceVariant
-                    },
+                    color = messageColor(message),
                 )
             }
         }
@@ -288,6 +309,62 @@ private fun StatusText(turn: String, state: GameUiState.Playing, modifier: Modif
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
+    }
+}
+
+/** The colour a message is shown in, wherever it appears - the status line or the history list. */
+@Composable
+private fun messageColor(message: GameMessage): Color = when (message) {
+    is GameMessage.CardRefused -> MaterialTheme.colorScheme.error
+    is GameMessage.RegionAbsent -> MaterialTheme.colorScheme.error
+    is GameMessage.QuartetCompleted -> MaterialTheme.colorScheme.primary
+    is GameMessage.CardReceived -> MaterialTheme.colorScheme.onSurfaceVariant
+    is GameMessage.RegionPresent -> MaterialTheme.colorScheme.onSurfaceVariant
+}
+
+/**
+ * Every action taken so far this game. Most recent first, and scrollable once
+ * it grows past the dialog's height.
+ */
+@Composable
+private fun HistoryDialog(history: List<GameMessage>, onDismiss: () -> Unit) {
+    Dialog(onDismissRequest = onDismiss) {
+        Card {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text(
+                    text = stringResource(R.string.game_history_title),
+                    style = MaterialTheme.typography.titleLarge,
+                )
+                if (history.isEmpty()) {
+                    Text(
+                        text = stringResource(R.string.game_history_empty),
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.padding(top = 12.dp),
+                    )
+                } else {
+                    LazyColumn(
+                        modifier = Modifier.heightIn(max = 420.dp).padding(top = 8.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp),
+                    ) {
+                        items(history.size) { index ->
+                            if (index > 0) HorizontalDivider()
+                            Text(
+                                text = messageText(history[index]),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = messageColor(history[index]),
+                                modifier = Modifier.padding(vertical = 6.dp),
+                            )
+                        }
+                    }
+                }
+                TextButton(
+                    onClick = onDismiss,
+                    modifier = Modifier.align(Alignment.End).padding(top = 8.dp),
+                ) {
+                    Text(stringResource(R.string.action_close))
+                }
+            }
+        }
     }
 }
 

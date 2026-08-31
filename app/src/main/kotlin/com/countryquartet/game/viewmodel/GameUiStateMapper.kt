@@ -16,6 +16,7 @@ internal fun playingState(
     game: GameState,
     selection: Selection,
     message: GameMessage?,
+    history: List<GameMessage> = emptyList(),
     animationsEnabled: Boolean = true,
 ): GameUiState.Playing {
     val human = game.players.first { it.isHuman }
@@ -81,6 +82,7 @@ internal fun playingState(
         canAskRegion = canAskRegion,
         canAsk = canAsk,
         message = message,
+        history = history,
         animationsEnabled = animationsEnabled,
         isFinished = game.isFinished,
         winnerNames = game.winnerIds.map { game.player(it).name },
