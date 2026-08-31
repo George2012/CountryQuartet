@@ -65,7 +65,9 @@ fun CompactCountryCard(
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Center,
-                        maxLines = 2,
+                        // "Sri Jayawardenepura Kotte" needs a third line at
+                        // this width, and a half shown capital helps nobody.
+                        maxLines = 3,
                         overflow = TextOverflow.Ellipsis,
                     )
                 }
