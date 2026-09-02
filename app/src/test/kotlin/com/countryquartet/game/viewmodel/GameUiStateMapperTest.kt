@@ -123,7 +123,9 @@ class GameUiStateMapperTest {
         val state = TestGame.stateOf(listOf("se"), listOf("no"), listOf("dk"), listOf("fi"))
         val history = listOf(
             GameMessage.CardReceived("Player 0", "Player 1", "Norway", askerIsHuman = true, targetIsHuman = false),
-            GameMessage.CardRefused("Player 0", "Player 2", "Denmark", targetIsHuman = false),
+            GameMessage.CardRefused(
+                "Player 0", "Player 2", "Denmark", askerIsHuman = true, targetIsHuman = false,
+            ),
         )
 
         assertEquals(history, map(state, history = history).history)

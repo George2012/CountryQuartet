@@ -57,6 +57,7 @@ sealed interface GameMessage {
         val askerName: String,
         val targetName: String,
         val countryName: String,
+        val askerIsHuman: Boolean,
         val targetIsHuman: Boolean,
     ) : GameMessage
 
@@ -65,6 +66,7 @@ sealed interface GameMessage {
         val askerName: String,
         val targetName: String,
         val quartetName: String,
+        val askerIsHuman: Boolean,
         val targetIsHuman: Boolean,
     ) : GameMessage
 
@@ -73,11 +75,16 @@ sealed interface GameMessage {
         val askerName: String,
         val targetName: String,
         val quartetName: String,
+        val askerIsHuman: Boolean,
         val targetIsHuman: Boolean,
     ) : GameMessage
 
     data class QuartetCompleted(
         val playerName: String,
+        val targetName: String,
+        val countryName: String,
+        val askerIsHuman: Boolean,
+        val targetIsHuman: Boolean,
         val quartet: Quartet,
         val countries: List<Country>,
     ) : GameMessage
@@ -111,9 +118,26 @@ sealed interface GameUiState {
         /** Every action taken so far this game, most recent first. */
         val history: List<GameMessage>,
         val animationsEnabled: Boolean,
+        /** Whether the computer players move on their own instead of on Next. */
+        val autoPlay: Boolean,
+        /**
+         * Whether the human's lost turn still owes them a card. The hand and
+         * the deck shown are the ones from before the failed ask until they
+         * take it.
+         */
+        val mustTakeCard: Boolean,
         val isFinished: Boolean,
         val winnerNames: List<String>,
     ) : GameUiState {
+
+        /**
+         * Whether a computer ask is waiting to be played. True for exactly as
+         * long as the Next button has something to do.
+         */
+        val canStep: Boolean get() = !isFinished && !isHumanTurn && !mustTakeCard
+
+        /** Whether the human can pick and ask right now. */
+        val canAct: Boolean get() = isHumanTurn && !mustTakeCard
 
         /** Whether the opponent currently picked has confirmed holding a card of [quartetId] this turn. */
         fun isRegionConfirmed(quartetId: String): Boolean {

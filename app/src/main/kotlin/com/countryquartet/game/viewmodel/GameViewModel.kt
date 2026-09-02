@@ -10,6 +10,7 @@ import com.countryquartet.game.AppGraph
 import com.countryquartet.game.ai.AiStrategy
 import com.countryquartet.game.ai.BasicAi
 import com.countryquartet.game.data.AssetGameDataSource
+import com.countryquartet.game.game.CardRequest
 import com.countryquartet.game.game.GameEngine
 import com.countryquartet.game.game.RegionOutcome
 import com.countryquartet.game.game.RequestOutcome
@@ -57,6 +58,42 @@ class GameViewModel(
     private var history: List<GameMessage> = emptyList()
     private var aiTurns: Job? = null
 
+    /**
+     * Whether the computer players move on their own.
+     *
+     * Off by default: a game is stepped through one ask at a time so a player
+     * can follow what the opponents are doing. Turning it on hands the pacing
+     * back to the timer.
+     */
+    private var autoPlay = false
+
+    /**
+     * The ask the current computer player is in the middle of. It is chosen
+     * once and then survives between steps, because naming the region and
+     * naming the country are two separate presses of Next.
+     */
+    private var pendingRequest: CardRequest? = null
+
+    /**
+     * (opponent, quartet) pairs the current computer player has already had
+     * confirmed this turn, so it does not ask about the same region twice.
+     */
+    private val confirmedThisTurn = mutableSetOf<Pair<String, String>>()
+
+    /** Who the above two belong to; anyone else starts with a clean slate. */
+    private var lastAsker: String? = null
+
+    /**
+     * The picture to keep showing while the human still owes themselves the
+     * card a lost turn pays out: the state as it stood *before* the failed ask.
+     *
+     * The engine settles the draw as part of the failed request, so this is
+     * only how it is presented - the card stays on the pile on screen, and the
+     * turn stays with the human, until they take it. Never set while auto play
+     * is on, which does not stop for anything.
+     */
+    private var pendingTake: GameState? = null
+
     /** Guards against counting the same finished game more than once. */
     private var finishRecorded = false
 
@@ -76,6 +113,10 @@ class GameViewModel(
         message = null
         history = emptyList()
         finishRecorded = false
+        // Every game starts stepped: auto play is a choice made per game.
+        autoPlay = false
+        pendingTake = null
+        forgetAiTurn()
         try {
             if (!::gameData.isInitialized) {
                 gameData = repository.gameData()
@@ -134,6 +175,8 @@ class GameViewModel(
             )
             is RegionOutcome.Absent -> Selection()
         }
+        awaitTake((result.outcome as? RegionOutcome.Absent)?.drewFromDeck == true, current)
+        forgetAiTurn()
         publish()
         continueWithAi()
     }
@@ -165,8 +208,59 @@ class GameViewModel(
             )
             is RequestOutcome.Failure -> Selection()
         }
+        awaitTake((result.outcome as? RequestOutcome.Failure)?.drewFromDeck == true, current)
+        forgetAiTurn()
         publish()
         continueWithAi()
+    }
+
+    /**
+     * Plays the next computer ask: what the Next button does.
+     *
+     * Ignored while auto play is on, where the timer drives the same steps.
+     */
+    fun advance() {
+        // A card still owed comes first: nothing moves until it is taken.
+        if (autoPlay || pendingTake != null) return
+        playOneAiStep()
+    }
+
+    /**
+     * Takes the card a lost turn pays out: what the Take button under the deck
+     * does. Only then does the hand grow, the pile shrink and the turn pass on.
+     */
+    fun takeCard() {
+        if (pendingTake == null) return
+        pendingTake = null
+        publish()
+        continueWithAi()
+    }
+
+    /**
+     * Keeps [before] on screen while the human is owed a card, so it is theirs
+     * only once they take it.
+     */
+    private fun awaitTake(drewFromDeck: Boolean, before: GameState) {
+        if (!autoPlay && drewFromDeck) pendingTake = before
+    }
+
+    /**
+     * Turns auto play on or off.
+     *
+     * Switching it on picks the game up wherever the stepping left it, so a
+     * half-played computer turn carries straight on.
+     */
+    fun setAutoPlay(enabled: Boolean) {
+        if (autoPlay == enabled) return
+        autoPlay = enabled
+        if (enabled) {
+            // Auto play does not stop for a card: anything owed is taken now.
+            pendingTake = null
+            continueWithAi()
+        } else {
+            aiTurns?.cancel()
+        }
+        publish()
     }
 
     private fun isHumanTurn(): Boolean {
@@ -174,48 +268,71 @@ class GameViewModel(
         return !current.isFinished && current.currentPlayer.isHuman
     }
 
+    private fun isAiTurn(): Boolean {
+        val current = game ?: return false
+        return !current.isFinished && !current.currentPlayer.isHuman
+    }
+
     /**
-     * Plays computer turns until it is the human's turn again or the game
-     * ends. Each request is played out in the same two steps a human takes:
-     * a region check, then the specific card - unless this AI already
-     * confirmed that opponent holds that region earlier in the same turn.
+     * Plays computer turns on a timer until it is the human's turn again or
+     * the game ends. Only used while auto play is on; otherwise the very same
+     * steps wait for [advance].
      */
     private fun continueWithAi() {
         aiTurns?.cancel()
+        if (!autoPlay) return
         aiTurns = viewModelScope.launch {
-            val confirmedThisTurn = mutableSetOf<Pair<String, String>>()
-            var lastAsker: String? = null
-            while (true) {
-                val current = game ?: return@launch
-                if (current.isFinished || current.currentPlayer.isHuman) return@launch
-                if (current.currentPlayer.id != lastAsker) {
-                    confirmedThisTurn.clear()
-                    lastAsker = current.currentPlayer.id
-                }
-
-                val request = ai.chooseRequest(engine, current)
-                val quartetId = gameData.country(request.countryId).quartetId
-                val pair = request.targetPlayerId to quartetId
-
-                var stateForCountryAsk = current
-                if (pair !in confirmedThisTurn) {
-                    delay(aiThinkingDelay())
-                    val regionResult = engine.askRegion(current, request.targetPlayerId, quartetId)
-                    game = regionResult.state
-                    record(describeRegion(current, regionResult.outcome))
-                    publish()
-                    if (regionResult.outcome is RegionOutcome.Absent) continue
-                    confirmedThisTurn += pair
-                    stateForCountryAsk = regionResult.state
-                }
-
+            while (isAiTurn()) {
                 delay(aiThinkingDelay())
-                val result = engine.ask(stateForCountryAsk, request.targetPlayerId, request.countryId)
-                game = result.state
-                record(describe(stateForCountryAsk, result.outcome))
-                publish()
+                playOneAiStep()
             }
         }
+    }
+
+    /**
+     * Plays exactly one computer ask, in the same two steps a human takes: the
+     * region question, and then - once that came back "yes" - the specific
+     * country. A region already confirmed earlier in the same turn is not
+     * asked about again, so that step is skipped.
+     */
+    private fun playOneAiStep() {
+        val current = game ?: return
+        if (!isAiTurn()) return
+
+        if (current.currentPlayer.id != lastAsker) {
+            forgetAiTurn()
+            lastAsker = current.currentPlayer.id
+        }
+
+        val request = pendingRequest ?: ai.chooseRequest(engine, current).also { pendingRequest = it }
+        val quartetId = gameData.country(request.countryId).quartetId
+        val pair = request.targetPlayerId to quartetId
+
+        if (pair in confirmedThisTurn) {
+            val result = engine.ask(current, request.targetPlayerId, request.countryId)
+            game = result.state
+            record(describe(current, result.outcome))
+            // Whatever happened, the next ask is chosen afresh: a success keeps
+            // the turn, a failure hands it on.
+            pendingRequest = null
+        } else {
+            val regionResult = engine.askRegion(current, request.targetPlayerId, quartetId)
+            game = regionResult.state
+            record(describeRegion(current, regionResult.outcome))
+            when (regionResult.outcome) {
+                // A "no" ends the turn, so the chosen country is dropped.
+                is RegionOutcome.Absent -> pendingRequest = null
+                is RegionOutcome.Present -> confirmedThisTurn += pair
+            }
+        }
+        publish()
+    }
+
+    /** Drops what the computer player in the middle of a turn was doing. */
+    private fun forgetAiTurn() {
+        confirmedThisTurn.clear()
+        pendingRequest = null
+        lastAsker = null
     }
 
     /** Describes an outcome using the names known before the move was applied. */
@@ -228,11 +345,16 @@ class GameViewModel(
                 askerName = askingPlayer.name,
                 targetName = targetPlayer.name,
                 countryName = country,
+                askerIsHuman = askingPlayer.isHuman,
                 targetIsHuman = targetPlayer.isHuman,
             )
             is RequestOutcome.Success -> outcome.completedQuartetId?.let { quartetId ->
                 GameMessage.QuartetCompleted(
                     playerName = askingPlayer.name,
+                    targetName = targetPlayer.name,
+                    countryName = country,
+                    askerIsHuman = askingPlayer.isHuman,
+                    targetIsHuman = targetPlayer.isHuman,
                     quartet = gameData.quartet(quartetId),
                     countries = gameData.countriesOf(quartetId),
                 )
@@ -256,12 +378,14 @@ class GameViewModel(
                 askerName = askingPlayer.name,
                 targetName = targetPlayer.name,
                 quartetName = quartet,
+                askerIsHuman = askingPlayer.isHuman,
                 targetIsHuman = targetPlayer.isHuman,
             )
             is RegionOutcome.Present -> GameMessage.RegionPresent(
                 askerName = askingPlayer.name,
                 targetName = targetPlayer.name,
                 quartetName = quartet,
+                askerIsHuman = askingPlayer.isHuman,
                 targetIsHuman = targetPlayer.isHuman,
             )
         }
@@ -274,7 +398,9 @@ class GameViewModel(
     }
 
     private fun publish() {
-        val current = game ?: return
+        // While a card is owed the picture stays at the state before the failed
+        // ask, so the card is only handed over when it is taken.
+        val current = pendingTake ?: game ?: return
         recordFinishedGame(current)
         _uiState.value = playingState(
             engine = engine,
@@ -284,6 +410,8 @@ class GameViewModel(
             message = message,
             history = history,
             animationsEnabled = settings.settings.value.animationsEnabled,
+            autoPlay = autoPlay,
+            mustTakeCard = pendingTake != null,
         )
     }
 

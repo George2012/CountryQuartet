@@ -27,10 +27,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilterChip
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -61,6 +61,7 @@ import com.countryquartet.game.ui.components.CompletedQuartetCard
 import com.countryquartet.game.ui.components.DeckPile
 import com.countryquartet.game.ui.components.LocalAnimationsEnabled
 import com.countryquartet.game.ui.components.Motion
+import com.countryquartet.game.ui.components.PlayerAvatar
 import com.countryquartet.game.ui.components.ScreenScaffold
 import com.countryquartet.game.ui.theme.CountryQuartetTheme
 import com.countryquartet.game.ui.theme.quartetBackground
@@ -100,6 +101,9 @@ fun GameScreen(
                     onOpponentClick = viewModel::selectOpponent,
                     onAskRegion = viewModel::askRegion,
                     onAsk = viewModel::ask,
+                    onNext = viewModel::advance,
+                    onToggleAuto = viewModel::setAutoPlay,
+                    onTakeCard = viewModel::takeCard,
                     onPlayAgain = viewModel::startNewGame,
                     onMainMenu = onBack,
                 )
@@ -127,6 +131,9 @@ private fun GameContent(
     onOpponentClick: (String) -> Unit,
     onAskRegion: () -> Unit,
     onAsk: () -> Unit,
+    onNext: () -> Unit,
+    onToggleAuto: (Boolean) -> Unit,
+    onTakeCard: () -> Unit,
     onPlayAgain: () -> Unit,
     onMainMenu: () -> Unit,
 ) {
@@ -139,10 +146,11 @@ private fun GameContent(
         ScoreBoard(
             standings = state.standings,
             selectedOpponentId = state.selection.opponentId,
-            canChoose = state.isHumanTurn,
+            canChoose = state.canAct,
             onOpponentClick = onOpponentClick,
         )
-        StatusLine(state, onHistoryClick = { showHistory = true })
+        StatusLine(state, onHistoryClick = { showHistory = true }, onTakeCard = onTakeCard)
+        TurnControls(state = state, onNext = onNext, onToggleAuto = onToggleAuto)
         QuartetCompletedBanner(state.justCompletedQuartet)
 
         if (state.isFinished) {
@@ -190,7 +198,7 @@ private fun ScoreBoard(
         modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(6.dp),
     ) {
-        standings.forEach { player ->
+        standings.forEachIndexed { seatIndex, player ->
             Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
                 // Turn changes are shown by the highlight moving along the
                 // score board rather than by anything jumping.
@@ -211,6 +219,12 @@ private fun ScoreBoard(
                         modifier = Modifier.fillMaxWidth().padding(6.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
+                        PlayerAvatar(
+                            isHuman = player.isHuman,
+                            seatIndex = seatIndex,
+                            isCurrent = player.isCurrent,
+                            modifier = Modifier.padding(bottom = 4.dp),
+                        )
                         Text(
                             text = player.name,
                             style = MaterialTheme.typography.labelMedium,
@@ -239,8 +253,88 @@ private fun ScoreBoard(
     }
 }
 
+/**
+ * Who has to do something next, and how the computer players are paced.
+ *
+ * A game is stepped by default: the computer players wait on Next, one ask per
+ * press, so their turns can be followed. AUTO hands the pacing back to the
+ * timer and disables Next.
+ */
 @Composable
-private fun StatusLine(state: GameUiState.Playing, onHistoryClick: () -> Unit) {
+private fun TurnControls(
+    state: GameUiState.Playing,
+    onNext: () -> Unit,
+    onToggleAuto: (Boolean) -> Unit,
+) {
+    if (state.isFinished) return
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        if (state.isHumanTurn) {
+            // While a card is owed the banner says so instead, because taking
+            // it is the only thing the Take button will let happen next.
+            YourTurnBanner(
+                text = if (state.mustTakeCard) {
+                    stringResource(R.string.game_take_banner)
+                } else {
+                    stringResource(R.string.game_your_turn_banner)
+                },
+                modifier = Modifier.weight(1f),
+            )
+        } else {
+            Button(
+                onClick = onNext,
+                enabled = state.canStep && !state.autoPlay,
+                modifier = Modifier.weight(1f),
+            ) {
+                // While auto play runs there is nothing to press, so the button
+                // says why rather than sitting there greyed out and unexplained.
+                Text(
+                    text = if (state.autoPlay) {
+                        stringResource(R.string.game_auto_hint)
+                    } else {
+                        stringResource(R.string.game_next)
+                    },
+                    maxLines = 1,
+                )
+            }
+        }
+        FilterChip(
+            selected = state.autoPlay,
+            onClick = { onToggleAuto(!state.autoPlay) },
+            label = { Text(stringResource(R.string.game_auto), maxLines = 1) },
+        )
+    }
+}
+
+/** Takes the place of the Next button, so the turn never looks stuck. */
+@Composable
+private fun YourTurnBanner(text: String, modifier: Modifier = Modifier) {
+    Card(
+        modifier = modifier,
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer,
+            contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+        ),
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp, horizontal = 8.dp),
+        )
+    }
+}
+
+@Composable
+private fun StatusLine(
+    state: GameUiState.Playing,
+    onHistoryClick: () -> Unit,
+    onTakeCard: () -> Unit,
+) {
     val turn = if (state.isHumanTurn) {
         stringResource(R.string.game_turn_yours)
     } else {
@@ -257,7 +351,20 @@ private fun StatusLine(state: GameUiState.Playing, onHistoryClick: () -> Unit) {
             onHistoryClick = onHistoryClick,
             modifier = Modifier.weight(1f),
         )
-        DeckPile(count = state.deckCount)
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            DeckPile(count = state.deckCount)
+            // The card a lost turn pays out is taken off this pile, so the
+            // button that takes it belongs right under it.
+            if (state.mustTakeCard) {
+                Button(
+                    onClick = onTakeCard,
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
+                    modifier = Modifier.padding(top = 4.dp),
+                ) {
+                    Text(stringResource(R.string.game_take), maxLines = 1)
+                }
+            }
+        }
     }
 }
 
@@ -271,9 +378,17 @@ private fun StatusText(
     Column(modifier = modifier) {
         if (!state.isFinished) {
             Text(text = turn, style = MaterialTheme.typography.titleMedium)
-            TextButton(
+            // An outline and a tonal fill: as plain text this was easy to read
+            // straight past, and nothing else on the screen says it opens
+            // anything.
+            OutlinedButton(
                 onClick = onHistoryClick,
-                contentPadding = PaddingValues(horizontal = 0.dp, vertical = 4.dp),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                ),
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
+                modifier = Modifier.heightIn(min = 36.dp).padding(vertical = 2.dp),
             ) {
                 Text(stringResource(R.string.game_history), style = MaterialTheme.typography.labelMedium)
             }
@@ -323,8 +438,8 @@ private fun messageColor(message: GameMessage): Color = when (message) {
 }
 
 /**
- * Every action taken so far this game. Most recent first, and scrollable once
- * it grows past the dialog's height.
+ * Every action taken so far this game. Most recent first, one card per
+ * record, and scrollable once it grows past the dialog's height.
  */
 @Composable
 private fun HistoryDialog(history: List<GameMessage>, onDismiss: () -> Unit) {
@@ -344,16 +459,10 @@ private fun HistoryDialog(history: List<GameMessage>, onDismiss: () -> Unit) {
                 } else {
                     LazyColumn(
                         modifier = Modifier.heightIn(max = 420.dp).padding(top = 8.dp),
-                        verticalArrangement = Arrangement.spacedBy(4.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
                         items(history.size) { index ->
-                            if (index > 0) HorizontalDivider()
-                            Text(
-                                text = messageText(history[index]),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = messageColor(history[index]),
-                                modifier = Modifier.padding(vertical = 6.dp),
-                            )
+                            HistoryEntryCard(history[index])
                         }
                     }
                 }
@@ -366,6 +475,80 @@ private fun HistoryDialog(history: List<GameMessage>, onDismiss: () -> Unit) {
             }
         }
     }
+}
+
+/**
+ * One history record as a single element: who asked whom, what they asked
+ * about, and how it went.
+ */
+@Composable
+private fun HistoryEntryCard(message: GameMessage) {
+    val (asked, about, result) = historyLines(message)
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(10.dp),
+            verticalArrangement = Arrangement.spacedBy(2.dp),
+        ) {
+            Text(text = asked, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
+            Text(
+                text = about,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Text(
+                text = result,
+                style = MaterialTheme.typography.bodyMedium,
+                color = messageColor(message),
+                fontWeight = FontWeight.Bold,
+            )
+        }
+    }
+}
+
+/** The three lines of a history record: who asked whom, what, and the result. */
+@Composable
+private fun historyLines(message: GameMessage): Triple<String, String, String> = when (message) {
+    is GameMessage.CardReceived -> Triple(
+        askedLine(message.askerName, message.targetName, message.askerIsHuman, message.targetIsHuman),
+        stringResource(R.string.history_about_country, message.countryName),
+        stringResource(R.string.history_result_got_it),
+    )
+    is GameMessage.CardRefused -> Triple(
+        askedLine(message.askerName, message.targetName, message.askerIsHuman, message.targetIsHuman),
+        stringResource(R.string.history_about_country, message.countryName),
+        stringResource(R.string.history_result_no),
+    )
+    is GameMessage.RegionPresent -> Triple(
+        askedLine(message.askerName, message.targetName, message.askerIsHuman, message.targetIsHuman),
+        stringResource(R.string.history_about_region, message.quartetName),
+        stringResource(R.string.history_result_yes),
+    )
+    is GameMessage.RegionAbsent -> Triple(
+        askedLine(message.askerName, message.targetName, message.askerIsHuman, message.targetIsHuman),
+        stringResource(R.string.history_about_region, message.quartetName),
+        stringResource(R.string.history_result_no),
+    )
+    is GameMessage.QuartetCompleted -> Triple(
+        askedLine(message.playerName, message.targetName, message.askerIsHuman, message.targetIsHuman),
+        stringResource(R.string.history_about_country, message.countryName),
+        stringResource(R.string.history_result_quartet, message.quartet.name),
+    )
+}
+
+/** "You asked X" / "X asked you" / "X asked Y" - whichever side of the ask is human, if either. */
+@Composable
+private fun askedLine(
+    askerName: String,
+    targetName: String,
+    askerIsHuman: Boolean,
+    targetIsHuman: Boolean,
+): String = when {
+    askerIsHuman -> stringResource(R.string.history_asked_by_you, targetName)
+    targetIsHuman -> stringResource(R.string.history_asked_you, askerName)
+    else -> stringResource(R.string.history_asked, askerName, targetName)
 }
 
 @Composable
@@ -439,7 +622,7 @@ private fun HandList(
                 isSelected = isSelected,
                 selectedCountryId = state.selection.countryId,
                 regionConfirmed = state.isRegionConfirmed(group.quartet.id),
-                enabled = state.isHumanTurn,
+                enabled = state.canAct,
                 // The ask buttons only ever apply to the selected card, so the
                 // rest of the hand does not need to care whether asking is
                 // currently possible.
@@ -548,6 +731,10 @@ private fun QuartetGroupCard(
                                 // it keeps every card the same height and there is
                                 // something to learn while choosing.
                                 capital = country.capital,
+                                // Smaller than the owned row above: there can be up
+                                // to three of these, and this row is only ever
+                                // picked from, never referred back to.
+                                small = true,
                                 state = when {
                                     !enabled -> CardState.Disabled
                                     country.id == selectedCountryId -> CardState.Selected

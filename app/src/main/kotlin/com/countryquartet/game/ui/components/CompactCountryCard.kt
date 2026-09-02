@@ -32,19 +32,21 @@ fun CompactCountryCard(
     capital: String?,
     modifier: Modifier = Modifier,
     state: CardState = CardState.Normal,
+    /** A slightly smaller frame, for lists where a full-size card would crowd the row. */
+    small: Boolean = false,
     onClick: (() -> Unit)? = null,
 ) {
     CardSurface(
         state = state,
         onClick = onClick,
-        modifier = modifier.width(CARD_WIDTH),
+        modifier = modifier.width(if (small) SMALL_CARD_WIDTH else CARD_WIDTH),
     ) {
         Column(
             modifier = Modifier.padding(horizontal = 6.dp, vertical = 8.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
-            CountryFlag(countryId = countryId, size = FLAG_HEIGHT)
+            CountryFlag(countryId = countryId, size = if (small) SMALL_FLAG_HEIGHT else FLAG_HEIGHT)
 
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -80,3 +82,6 @@ fun CompactCountryCard(
 private val CARD_WIDTH = 104.dp
 private val FLAG_HEIGHT = 40.dp
 private val FLAG_GLYPH = 28.sp
+
+private val SMALL_CARD_WIDTH = 76.dp
+private val SMALL_FLAG_HEIGHT = 28.dp

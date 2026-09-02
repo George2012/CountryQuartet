@@ -18,6 +18,8 @@ internal fun playingState(
     message: GameMessage?,
     history: List<GameMessage> = emptyList(),
     animationsEnabled: Boolean = true,
+    autoPlay: Boolean = false,
+    mustTakeCard: Boolean = false,
 ): GameUiState.Playing {
     val human = game.players.first { it.isHuman }
     val ownedIds = human.cards.toSet()
@@ -43,12 +45,15 @@ internal fun playingState(
     val regionConfirmed = selection.opponentId != null &&
         selectedQuartetId != null &&
         (selection.opponentId to selectedQuartetId) in selection.confirmedRegions
-    val canAskRegion = isHumanTurn &&
+    // A card still owed comes before any further asking.
+    val canAskRegion = !mustTakeCard &&
+        isHumanTurn &&
         selection.quartetId != null &&
         selection.opponentId != null &&
         !regionConfirmed &&
         engine.isLegalRegionRequest(game, selection.opponentId, selection.quartetId)
-    val canAsk = isHumanTurn &&
+    val canAsk = !mustTakeCard &&
+        isHumanTurn &&
         selection.countryId != null &&
         selection.opponentId != null &&
         regionConfirmed &&
@@ -84,6 +89,8 @@ internal fun playingState(
         message = message,
         history = history,
         animationsEnabled = animationsEnabled,
+        autoPlay = autoPlay,
+        mustTakeCard = mustTakeCard,
         isFinished = game.isFinished,
         winnerNames = game.winnerIds.map { game.player(it).name },
     )

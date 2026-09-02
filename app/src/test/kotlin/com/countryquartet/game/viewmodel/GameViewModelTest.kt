@@ -42,12 +42,21 @@ class GameViewModelTest {
     @After
     fun tearDown() = Dispatchers.resetMain()
 
-    private fun newViewModel(seed: Long = 1, animations: Boolean = true) = GameViewModel(
+    /**
+     * A game set up the way most of these tests want it: on auto play, so the
+     * computer turns run by themselves and `advanceUntilIdle` is enough to get
+     * back to the human. Pass `autoPlay = false` to drive them by hand.
+     */
+    private fun newViewModel(
+        seed: Long = 1,
+        animations: Boolean = true,
+        autoPlay: Boolean = true,
+    ) = GameViewModel(
         repository = CountryRepository(AssetFiles),
         ai = BasicAi(Random(seed)),
         random = Random(seed),
         settings = InMemorySettingsRepository(GameSettings(animationsEnabled = animations)),
-    )
+    ).apply { setAutoPlay(autoPlay) }
 
     private val GameViewModel.playing: GameUiState.Playing
         get() = uiState.value as GameUiState.Playing
@@ -395,7 +404,7 @@ class GameViewModelTest {
             random = Random(3),
             settings = settings,
             statistics = statistics,
-        )
+        ).apply { setAutoPlay(true) }
         advanceUntilIdle()
         assertEquals(0, statistics.statistics.value.gamesPlayed)
 
@@ -427,7 +436,7 @@ class GameViewModelTest {
             random = Random(9),
             settings = InMemorySettingsRepository(GameSettings(animationsEnabled = false)),
             statistics = statistics,
-        )
+        ).apply { setAutoPlay(true) }
         advanceUntilIdle()
         playHumanTurns(viewModel, count = 500)
 
@@ -500,5 +509,244 @@ class GameViewModelTest {
         advanceUntilIdle()
 
         assertEquals(emptyList<GameMessage>(), viewModel.playing.history)
+    }
+
+    @Test
+    fun `by default the computer players wait to be stepped through`() = runTest {
+        val viewModel = newViewModel(autoPlay = false)
+        advanceUntilIdle()
+        assertFalse(viewModel.playing.autoPlay)
+
+        endHumanTurn(viewModel)
+        val waiting = viewModel.playing
+        assertFalse(waiting.isHumanTurn)
+        assertTrue("there should be a computer ask to step through", waiting.canStep)
+
+        // No amount of waiting moves the game on by itself.
+        advanceUntilIdle()
+        assertEquals(waiting.history, viewModel.playing.history)
+        assertEquals(waiting.currentPlayerName, viewModel.playing.currentPlayerName)
+    }
+
+    @Test
+    fun `one step plays exactly one computer ask`() = runTest {
+        val viewModel = newViewModel(autoPlay = false)
+        advanceUntilIdle()
+        endHumanTurn(viewModel)
+        val before = viewModel.playing.history.size
+
+        viewModel.advance()
+        advanceUntilIdle()
+
+        assertEquals(before + 1, viewModel.playing.history.size)
+    }
+
+    @Test
+    fun `a computer step asks about the region before it asks for the card`() = runTest {
+        val viewModel = newViewModel(autoPlay = false)
+        advanceUntilIdle()
+        endHumanTurn(viewModel)
+
+        viewModel.advance()
+        val first = viewModel.playing.message
+        assertTrue(
+            "$first should be a region question",
+            first is GameMessage.RegionPresent || first is GameMessage.RegionAbsent,
+        )
+
+        // A "yes" means the same computer player now names a country - on the
+        // next press, not straight away.
+        if (first is GameMessage.RegionPresent) {
+            viewModel.advance()
+            val second = viewModel.playing.message
+            assertTrue(
+                "$second should be about a country",
+                second is GameMessage.CardReceived ||
+                    second is GameMessage.CardRefused ||
+                    second is GameMessage.QuartetCompleted,
+            )
+        }
+    }
+
+    @Test
+    fun `turning auto on plays the computer turns without any presses`() = runTest {
+        val viewModel = newViewModel(autoPlay = false)
+        advanceUntilIdle()
+        endHumanTurn(viewModel)
+        assertTrue(viewModel.playing.canStep)
+
+        viewModel.setAutoPlay(true)
+        advanceUntilIdle()
+
+        assertTrue(viewModel.playing.autoPlay)
+        assertTrue(
+            "play should have come back to the human",
+            viewModel.playing.isHumanTurn || viewModel.playing.isFinished,
+        )
+    }
+
+    @Test
+    fun `turning auto off leaves the rest of the turn to the next button`() = runTest {
+        val viewModel = newViewModel(autoPlay = false)
+        advanceUntilIdle()
+        endHumanTurn(viewModel)
+
+        viewModel.setAutoPlay(true)
+        viewModel.setAutoPlay(false)
+        val stopped = viewModel.playing
+        advanceUntilIdle()
+
+        assertFalse(viewModel.playing.autoPlay)
+        assertEquals(stopped.history, viewModel.playing.history)
+    }
+
+    @Test
+    fun `there is nothing to step through while it is the human turn`() = runTest {
+        val viewModel = newViewModel(autoPlay = false)
+        advanceUntilIdle()
+
+        assertTrue(viewModel.playing.isHumanTurn)
+        assertFalse(viewModel.playing.canStep)
+
+        viewModel.advance()
+        advanceUntilIdle()
+
+        assertEquals(emptyList<GameMessage>(), viewModel.playing.history)
+    }
+
+    @Test
+    fun `play again goes back to manual play`() = runTest {
+        val viewModel = newViewModel(autoPlay = true)
+        advanceUntilIdle()
+        assertTrue(viewModel.playing.autoPlay)
+
+        viewModel.startNewGame()
+        advanceUntilIdle()
+
+        assertFalse(viewModel.playing.autoPlay)
+    }
+
+    /**
+     * Plays human moves until the turn passes to a computer player, and stops
+     * there: with auto play off that is exactly the position the Next button
+     * exists for. A lost turn owes a card, which is taken on the way past.
+     */
+    private fun endHumanTurn(viewModel: GameViewModel) {
+        var guard = 0
+        while (viewModel.playing.isHumanTurn && !viewModel.playing.mustTakeCard) {
+            check(guard++ < 200) { "the human never lost the turn" }
+            playOneHumanAsk(viewModel, guard)
+        }
+        if (viewModel.playing.mustTakeCard) viewModel.takeCard()
+    }
+
+    /** One human ask: the region while it is unconfirmed, then a country. */
+    private fun playOneHumanAsk(viewModel: GameViewModel, rotation: Int) {
+        val state = viewModel.playing
+        val group = state.hand.first()
+        if (state.selection.quartetId != group.quartet.id) {
+            viewModel.selectQuartet(group.quartet.id)
+        }
+        // Rotating the opponent keeps a run of lucky guesses from going on
+        // forever.
+        val opponent = state.opponents[rotation % state.opponents.size].id
+        if (viewModel.playing.selection.opponentId != opponent) {
+            viewModel.selectOpponent(opponent)
+        }
+
+        if (!viewModel.playing.isRegionConfirmed(group.quartet.id)) {
+            viewModel.askRegion()
+            return
+        }
+        viewModel.selectCountry(viewModel.playing.selectedGroup!!.missing.first().id)
+        viewModel.ask()
+    }
+
+    /** Plays human asks until one fails and leaves a card waiting to be taken. */
+    private fun playUntilCardOwed(viewModel: GameViewModel) {
+        var guard = 0
+        while (!viewModel.playing.mustTakeCard) {
+            check(guard++ < 200) { "no ask ever failed" }
+            check(viewModel.playing.isHumanTurn) { "the turn passed without owing a card" }
+            playOneHumanAsk(viewModel, guard)
+        }
+    }
+
+    @Test
+    fun `a lost turn holds the drawn card back until it is taken`() = runTest {
+        val viewModel = newViewModel(autoPlay = false)
+        advanceUntilIdle()
+
+        playUntilCardOwed(viewModel)
+
+        val waiting = viewModel.playing
+        val cardsBefore = waiting.human.cardCount
+        val deckBefore = waiting.deckCount
+        // Nothing has moved yet: the card is still on the pile and the turn is
+        // not over until it has been taken.
+        assertTrue(waiting.isHumanTurn)
+        assertFalse("asking again has to be blocked", waiting.canAct)
+
+        viewModel.takeCard()
+
+        val after = viewModel.playing
+        assertFalse(after.mustTakeCard)
+        assertEquals(cardsBefore + 1, after.human.cardCount)
+        assertEquals(deckBefore - 1, after.deckCount)
+        assertFalse("the turn passes once the card is taken", after.isHumanTurn)
+    }
+
+    @Test
+    fun `the computer players wait until the card has been taken`() = runTest {
+        val viewModel = newViewModel(autoPlay = false)
+        advanceUntilIdle()
+        playUntilCardOwed(viewModel)
+        val waiting = viewModel.playing
+
+        viewModel.advance()
+        advanceUntilIdle()
+
+        assertTrue("still owed a card", viewModel.playing.mustTakeCard)
+        assertEquals(waiting.history, viewModel.playing.history)
+        assertEquals(waiting.human.cardCount, viewModel.playing.human.cardCount)
+    }
+
+    @Test
+    fun `auto play never stops to take a card`() = runTest {
+        val viewModel = newViewModel(seed = 6, autoPlay = true)
+        advanceUntilIdle()
+
+        playHumanTurns(viewModel, count = 6)
+
+        assertFalse(viewModel.playing.mustTakeCard)
+    }
+
+    @Test
+    fun `turning auto on takes a card that was waiting`() = runTest {
+        val viewModel = newViewModel(autoPlay = false)
+        advanceUntilIdle()
+        playUntilCardOwed(viewModel)
+
+        viewModel.setAutoPlay(true)
+        advanceUntilIdle()
+
+        assertFalse(viewModel.playing.mustTakeCard)
+        assertTrue(
+            "play should have come back to the human",
+            viewModel.playing.isHumanTurn || viewModel.playing.isFinished,
+        )
+    }
+
+    @Test
+    fun `play again clears a card that was waiting to be taken`() = runTest {
+        val viewModel = newViewModel(autoPlay = false)
+        advanceUntilIdle()
+        playUntilCardOwed(viewModel)
+
+        viewModel.startNewGame()
+        advanceUntilIdle()
+
+        assertFalse(viewModel.playing.mustTakeCard)
+        assertTrue(viewModel.playing.canAct)
     }
 }

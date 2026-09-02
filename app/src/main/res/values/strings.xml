@@ -29,6 +29,12 @@
     <string name="game_ask">ASK</string>
     <string name="game_ask_region">ASK ABOUT THIS GROUP</string>
     <string name="game_cards_left">%1$d cards</string>
+    <string name="game_next">NEXT</string>
+    <string name="game_auto">AUTO</string>
+    <string name="game_auto_hint">Auto play is on</string>
+    <string name="game_your_turn_banner">Your turn — ask for a card!</string>
+    <string name="game_take">TAKE</string>
+    <string name="game_take_banner">Turn over — take a card!</string>
     <string name="game_msg_received">%1$s got %3$s from %2$s.</string>
     <string name="game_msg_received_by_you">You got %2$s from %1$s.</string>
     <string name="game_msg_received_from_you">%1$s took %2$s from you.</string>
@@ -54,6 +60,17 @@
     <string name="game_history_title">History</string>
     <string name="game_history_empty">Nothing has happened yet.</string>
     <string name="action_close">CLOSE</string>
+
+    <!-- History entries: line 1 who asked whom, line 2 what, line 3 the result -->
+    <string name="history_asked_by_you">You asked %1$s</string>
+    <string name="history_asked_you">%1$s asked you</string>
+    <string name="history_asked">%1$s asked %2$s</string>
+    <string name="history_about_region">About %1$s</string>
+    <string name="history_about_country">For %1$s</string>
+    <string name="history_result_yes">Yes, they have it!</string>
+    <string name="history_result_no">No. Turn over!</string>
+    <string name="history_result_got_it">Got it!</string>
+    <string name="history_result_quartet">Got it! QUARTET COMPLETED: %1$s</string>
 
     <!-- Country cards -->
     <string name="card_capital">Capital:</string>
