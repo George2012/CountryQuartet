@@ -563,16 +563,16 @@ private fun askedLine(
 
 @Composable
 private fun messageText(message: GameMessage): String = when (message) {
-    // Separate sentences per point of view: the human player is called "You",
-    // which does not fit a third person verb.
+    // Who asked whom, and for what. Separate sentences per point of view: the
+    // human player is called "You", which does not fit a third person verb.
     is GameMessage.CardReceived -> when {
         message.askerIsHuman -> stringResource(
-            R.string.game_msg_received_by_you,
+            R.string.game_msg_received_you_asked,
             message.targetName,
             message.countryName,
         )
         message.targetIsHuman -> stringResource(
-            R.string.game_msg_received_from_you,
+            R.string.game_msg_received_asked_you,
             message.askerName,
             message.countryName,
         )
@@ -583,26 +583,81 @@ private fun messageText(message: GameMessage): String = when (message) {
             message.countryName,
         )
     }
-    is GameMessage.CardRefused -> if (message.targetIsHuman) {
-        stringResource(R.string.game_msg_refused_by_you, message.countryName)
-    } else {
-        stringResource(R.string.game_msg_refused, message.targetName, message.countryName)
+    is GameMessage.CardRefused -> when {
+        message.askerIsHuman -> stringResource(
+            R.string.game_msg_refused_you_asked,
+            message.targetName,
+            message.countryName,
+        )
+        message.targetIsHuman -> stringResource(
+            R.string.game_msg_refused_asked_you,
+            message.askerName,
+            message.countryName,
+        )
+        else -> stringResource(
+            R.string.game_msg_refused,
+            message.askerName,
+            message.targetName,
+            message.countryName,
+        )
     }
-    is GameMessage.RegionPresent -> if (message.targetIsHuman) {
-        stringResource(R.string.game_msg_region_present_by_you, message.quartetName)
-    } else {
-        stringResource(R.string.game_msg_region_present, message.targetName, message.quartetName)
+    is GameMessage.RegionPresent -> when {
+        message.askerIsHuman -> stringResource(
+            R.string.game_msg_region_present_you_asked,
+            message.targetName,
+            message.quartetName,
+        )
+        message.targetIsHuman -> stringResource(
+            R.string.game_msg_region_present_asked_you,
+            message.askerName,
+            message.quartetName,
+        )
+        else -> stringResource(
+            R.string.game_msg_region_present,
+            message.askerName,
+            message.targetName,
+            message.quartetName,
+        )
     }
-    is GameMessage.RegionAbsent -> if (message.targetIsHuman) {
-        stringResource(R.string.game_msg_region_absent_by_you, message.quartetName)
-    } else {
-        stringResource(R.string.game_msg_region_absent, message.targetName, message.quartetName)
+    is GameMessage.RegionAbsent -> when {
+        message.askerIsHuman -> stringResource(
+            R.string.game_msg_region_absent_you_asked,
+            message.targetName,
+            message.quartetName,
+        )
+        message.targetIsHuman -> stringResource(
+            R.string.game_msg_region_absent_asked_you,
+            message.askerName,
+            message.quartetName,
+        )
+        else -> stringResource(
+            R.string.game_msg_region_absent,
+            message.askerName,
+            message.targetName,
+            message.quartetName,
+        )
     }
-    is GameMessage.QuartetCompleted -> stringResource(
-        R.string.game_msg_quartet,
-        message.playerName,
-        message.quartet.name,
-    )
+    is GameMessage.QuartetCompleted -> when {
+        message.askerIsHuman -> stringResource(
+            R.string.game_msg_quartet_you_asked,
+            message.targetName,
+            message.countryName,
+            message.quartet.name,
+        )
+        message.targetIsHuman -> stringResource(
+            R.string.game_msg_quartet_asked_you,
+            message.playerName,
+            message.countryName,
+            message.quartet.name,
+        )
+        else -> stringResource(
+            R.string.game_msg_quartet,
+            message.playerName,
+            message.targetName,
+            message.countryName,
+            message.quartet.name,
+        )
+    }
     is GameMessage.CardTaken -> stringResource(R.string.game_msg_took, message.country.name)
 }
 

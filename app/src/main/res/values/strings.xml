@@ -39,16 +39,26 @@
     <string name="game_took_banner">You took this card:</string>
     <string name="history_took">You took a card</string>
     <string name="history_from_deck">From the deck</string>
-    <string name="game_msg_received">%1$s got %3$s from %2$s.</string>
-    <string name="game_msg_received_by_you">You got %2$s from %1$s.</string>
-    <string name="game_msg_received_from_you">%1$s took %2$s from you.</string>
-    <string name="game_msg_refused">%1$s does not have %2$s. Turn over!</string>
-    <string name="game_msg_refused_by_you">You do not have %1$s. Turn over!</string>
-    <string name="game_msg_region_present">%1$s has %2$s cards!</string>
-    <string name="game_msg_region_present_by_you">You have %1$s cards!</string>
-    <string name="game_msg_region_absent">%1$s has no %2$s cards. Turn over!</string>
-    <string name="game_msg_region_absent_by_you">You have no %1$s cards. Turn over!</string>
-    <string name="game_msg_quartet">QUARTET COMPLETED! %1$s collected %2$s.</string>
+    <!--
+      Every status line names who asked whom and what was asked, so a turn
+      between two computer players is as readable as one of your own. Three
+      wordings each: you asked, you were asked, and neither.
+    -->
+    <string name="game_msg_received">%1$s asked %2$s for %3$s — got it!</string>
+    <string name="game_msg_received_you_asked">You asked %1$s for %2$s — got it!</string>
+    <string name="game_msg_received_asked_you">%1$s asked you for %2$s — and took it.</string>
+    <string name="game_msg_refused">%1$s asked %2$s for %3$s — no. Turn over!</string>
+    <string name="game_msg_refused_you_asked">You asked %1$s for %2$s — they do not have it. Turn over!</string>
+    <string name="game_msg_refused_asked_you">%1$s asked you for %2$s — you do not have it. Turn over!</string>
+    <string name="game_msg_region_present">%1$s asked %2$s about %3$s — yes!</string>
+    <string name="game_msg_region_present_you_asked">You asked %1$s about %2$s — yes, they have cards!</string>
+    <string name="game_msg_region_present_asked_you">%1$s asked you about %2$s — you have cards!</string>
+    <string name="game_msg_region_absent">%1$s asked %2$s about %3$s — no cards. Turn over!</string>
+    <string name="game_msg_region_absent_you_asked">You asked %1$s about %2$s — no cards. Turn over!</string>
+    <string name="game_msg_region_absent_asked_you">%1$s asked you about %2$s — you have none. Turn over!</string>
+    <string name="game_msg_quartet">%1$s asked %2$s for %3$s — QUARTET COMPLETED: %4$s!</string>
+    <string name="game_msg_quartet_you_asked">You asked %1$s for %2$s — QUARTET COMPLETED: %3$s!</string>
+    <string name="game_msg_quartet_asked_you">%1$s asked you for %2$s — QUARTET COMPLETED: %3$s!</string>
     <string name="game_quartet_banner">QUARTET COMPLETED! %1$s</string>
     <string name="game_over">GAME OVER</string>
     <string name="game_winner">%1$s wins!</string>
