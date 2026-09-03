@@ -25,7 +25,7 @@
     <string name="game_your_cards">Your cards</string>
     <string name="game_your_quartets">Your completed quartets</string>
     <string name="game_hint_pick_country">Pick the country you want:</string>
-    <string name="game_choose_opponent">PICK</string>
+    <string name="game_choose_opponent">ASK</string>
     <string name="game_ask">ASK</string>
     <string name="game_ask_region">ASK ABOUT THIS REGION</string>
     <string name="game_cards_left">%1$d cards</string>
