@@ -718,6 +718,7 @@ private fun QuartetGroupCard(
                 group.owned.forEach { country ->
                     CompactCountryCard(
                         countryId = country.id,
+                        quartetId = group.quartet.id,
                         name = country.name,
                         capital = country.capital,
                         state = CardState.Owned,
@@ -737,6 +738,7 @@ private fun QuartetGroupCard(
                         group.missing.forEach { country ->
                             CompactCountryCard(
                                 countryId = country.id,
+                                quartetId = group.quartet.id,
                                 name = country.name,
                                 // Cards you do not hold yet show their capital too:
                                 // it keeps every card the same height and there is
@@ -870,6 +872,7 @@ private fun TakenCardBanner(taken: GameMessage.CardTaken?) {
                 )
                 CompactCountryCard(
                     countryId = banner.country.id,
+                    quartetId = banner.country.quartetId,
                     name = banner.country.name,
                     capital = banner.country.capital,
                     state = CardState.Selected,

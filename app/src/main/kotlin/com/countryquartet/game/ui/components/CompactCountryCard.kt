@@ -22,12 +22,13 @@ import androidx.compose.ui.unit.sp
  * country name and its capital sit underneath in the same size, so the pair
  * reads as two lines of one label rather than a heading and a footnote.
  *
- * Same states and same frame as [CountryCard], so a selected card looks
- * selected everywhere.
+ * Same states, same frame and the same region colour as [CountryCard], so a
+ * card looks the same wherever it turns up.
  */
 @Composable
 fun CompactCountryCard(
     countryId: String,
+    quartetId: String,
     name: String,
     capital: String?,
     modifier: Modifier = Modifier,
@@ -37,6 +38,7 @@ fun CompactCountryCard(
     onClick: (() -> Unit)? = null,
 ) {
     CardSurface(
+        quartetId = quartetId,
         state = state,
         onClick = onClick,
         modifier = modifier.width(if (small) SMALL_CARD_WIDTH else CARD_WIDTH),

@@ -113,6 +113,7 @@ private fun CountriesList(quartets: List<QuartetEntry>, innerPadding: PaddingVal
                     entry.countries.forEach { country ->
                         CompactCountryCard(
                             countryId = country.id,
+                            quartetId = entry.quartet.id,
                             name = country.name,
                             capital = country.capital,
                             state = if (country.id == openCountryId) {

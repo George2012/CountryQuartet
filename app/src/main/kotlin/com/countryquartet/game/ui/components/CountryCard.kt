@@ -2,6 +2,7 @@ package com.countryquartet.game.ui.components
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -23,6 +24,8 @@ import com.countryquartet.game.R
 import com.countryquartet.game.model.Country
 import com.countryquartet.game.model.Quartet
 import com.countryquartet.game.ui.theme.CountryQuartetTheme
+import com.countryquartet.game.ui.theme.quartetBackground
+import com.countryquartet.game.ui.theme.quartetCardBackground
 import androidx.compose.ui.res.stringResource
 
 /**
@@ -42,7 +45,12 @@ fun CountryCard(
     ownedCountryIds: Set<String> = emptySet(),
     onClick: (() -> Unit)? = null,
 ) {
-    CardSurface(state = state, onClick = onClick, modifier = modifier.fillMaxWidth()) {
+    CardSurface(
+        quartetId = quartet.id,
+        state = state,
+        onClick = onClick,
+        modifier = modifier.fillMaxWidth(),
+    ) {
         Column(
             modifier = Modifier.fillMaxWidth().padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
@@ -134,7 +142,7 @@ fun CollectAllFour(
                     color = if (isCurrent || isOwned) {
                         MaterialTheme.colorScheme.primary
                     } else {
-                        MaterialTheme.colorScheme.outline
+                        MaterialTheme.colorScheme.onSurfaceVariant
                     },
                 )
                 Text(
@@ -155,39 +163,69 @@ fun CollectAllFour(
 /** Shared frame so every card state looks the same across screens. */
 @Composable
 internal fun CardSurface(
+    quartetId: String,
     state: CardState,
     onClick: (() -> Unit)?,
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit,
 ) {
-    // Picking a card is the main thing a player does, so the change of colour
-    // and lift is animated - and snaps instead when animations are switched off.
-    val targetColor = when (state) {
-        CardState.Selected -> MaterialTheme.colorScheme.secondaryContainer
-        CardState.Requested -> MaterialTheme.colorScheme.tertiaryContainer
-        CardState.Owned -> MaterialTheme.colorScheme.surfaceVariant
-        CardState.Disabled -> MaterialTheme.colorScheme.surfaceVariant
-        CardState.Normal -> MaterialTheme.colorScheme.surface
-    }
+    // The card is painted in its region's colour, so selection cannot be shown
+    // by swapping that colour: it is an outline and a lift instead, the same
+    // way the region blocks behind these cards do it.
     val containerColor by animateColorAsState(
-        targetValue = targetColor,
+        targetValue = quartetCardBackground(quartetId),
         animationSpec = Motion.spec(),
         label = "cardContainerColor",
     )
+    val borderColor = when (state) {
+        CardState.Selected -> MaterialTheme.colorScheme.primary
+        CardState.Requested -> MaterialTheme.colorScheme.tertiary
+        // A country still to be collected is outlined in the deeper shade of
+        // its own region, so it reads as an empty slot beside the solid cards
+        // the player already holds.
+        CardState.Normal -> quartetBackground(quartetId)
+        CardState.Owned, CardState.Disabled -> Color.Transparent
+    }
+    val border by animateDpAsState(
+        targetValue = when (state) {
+            CardState.Selected -> 3.dp
+            CardState.Requested -> 2.dp
+            CardState.Normal -> 1.dp
+            CardState.Owned, CardState.Disabled -> 0.dp
+        },
+        animationSpec = Motion.spec(),
+        label = "cardBorder",
+    )
     val lift by animateDpAsState(
-        targetValue = if (state == CardState.Selected) 6.dp else 1.dp,
+        targetValue = when (state) {
+            CardState.Selected -> 6.dp
+            CardState.Disabled -> 0.dp
+            else -> 1.dp
+        },
         animationSpec = Motion.spec(),
         label = "cardElevation",
     )
-    val colors = CardDefaults.cardColors(containerColor = containerColor)
+    val colors = CardDefaults.cardColors(
+        containerColor = containerColor,
+        // Faded rather than greyed out, so a card that cannot be touched right
+        // now still shows which region it belongs to.
+        disabledContainerColor = containerColor.copy(alpha = 0.45f),
+    )
     val elevation = CardDefaults.cardElevation(defaultElevation = lift)
+    val framed = modifier.then(
+        if (border > 0.dp) {
+            Modifier.border(border, borderColor, CardDefaults.shape)
+        } else {
+            Modifier
+        },
+    )
     if (onClick == null) {
-        Card(modifier = modifier, colors = colors, elevation = elevation) { content() }
+        Card(modifier = framed, colors = colors, elevation = elevation) { content() }
     } else {
         Card(
             onClick = onClick,
             enabled = state != CardState.Disabled,
-            modifier = modifier,
+            modifier = framed,
             colors = colors,
             elevation = elevation,
         ) { content() }
