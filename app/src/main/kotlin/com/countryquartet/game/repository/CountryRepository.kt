@@ -5,6 +5,7 @@ import com.countryquartet.game.data.GameDataSource
 import com.countryquartet.game.data.GameDataValidator
 import com.countryquartet.game.model.Country
 import com.countryquartet.game.model.GameData
+import com.countryquartet.game.model.Physicist
 import com.countryquartet.game.model.Quartet
 
 /**
@@ -17,6 +18,9 @@ class CountryRepository(private val source: GameDataSource) {
 
     @Volatile
     private var cached: GameData? = null
+
+    @Volatile
+    private var cachedPhysicists: List<Physicist>? = null
 
     /**
      * The validated dataset.
@@ -38,8 +42,22 @@ class CountryRepository(private val source: GameDataSource) {
 
     fun countriesOf(quartetId: String): List<Country> = gameData().countriesOf(quartetId)
 
+    /**
+     * The physicists a game draws its three opponents from.
+     *
+     * Read separately from the deck: who is playing is not part of the content
+     * of a card, and the engine never needs it.
+     */
+    fun physicists(): List<Physicist> = cachedPhysicists ?: synchronized(this) {
+        cachedPhysicists ?: loadPhysicists().also { cachedPhysicists = it }
+    }
+
     private fun load(): GameData = GameDataValidator.requireValid(
         countries = GameDataParser.parseCountries(source.readCountriesJson()),
         quartets = GameDataParser.parseQuartets(source.readQuartetsJson()),
+    )
+
+    private fun loadPhysicists(): List<Physicist> = GameDataValidator.requireValidPhysicists(
+        GameDataParser.parsePhysicists(source.readPhysicistsJson()),
     )
 }

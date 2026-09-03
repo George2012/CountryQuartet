@@ -14,6 +14,8 @@ object AssetFiles : GameDataSource {
 
     override fun readQuartetsJson(): String = read(AssetGameDataSource.QUARTETS_ASSET)
 
+    override fun readPhysicistsJson(): String = read(AssetGameDataSource.PHYSICISTS_ASSET)
+
     private fun read(name: String): String {
         val stream = AssetFiles::class.java.getResourceAsStream("/$name")
             ?: error("Asset $name is not on the test classpath")

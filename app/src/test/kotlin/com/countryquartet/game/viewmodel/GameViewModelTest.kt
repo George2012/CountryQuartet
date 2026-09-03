@@ -88,6 +88,7 @@ class GameViewModelTest {
         val broken = object : GameDataSource {
             override fun readCountriesJson(): String = "[]"
             override fun readQuartetsJson(): String = AssetFiles.readQuartetsJson()
+            override fun readPhysicistsJson(): String = AssetFiles.readPhysicistsJson()
         }
 
         val viewModel = GameViewModel(CountryRepository(broken))
@@ -694,6 +695,36 @@ class GameViewModelTest {
         assertEquals(cardsBefore + 1, after.human.cardCount)
         assertEquals(deckBefore - 1, after.deckCount)
         assertFalse("the turn passes once the card is taken", after.isHumanTurn)
+    }
+
+    @Test
+    fun `a game is played against three different physicists`() = runTest {
+        val viewModel = newViewModel()
+        advanceUntilIdle()
+
+        val opponents = viewModel.playing.opponents
+        val roster = CountryRepository(AssetFiles).physicists()
+
+        assertEquals(3, opponents.size)
+        assertEquals("the same physicist cannot sit twice", 3, opponents.map { it.id }.distinct().size)
+        opponents.forEach { opponent ->
+            val physicist = roster.firstOrNull { it.id == opponent.id }
+            assertTrue("${opponent.id} is not on the roster", physicist != null)
+            assertEquals(physicist!!.shortName, opponent.name)
+        }
+    }
+
+    @Test
+    fun `different deals bring different physicists to the table`() = runTest {
+        // Ten to choose three from, so two seeds agreeing on all three would be
+        // a real sign the roster is not being shuffled.
+        val lineUps = (1L..8L).map { seed ->
+            val viewModel = newViewModel(seed = seed)
+            advanceUntilIdle()
+            viewModel.playing.opponents.map { it.id }.toSet()
+        }
+
+        assertTrue("every deal seated the same three: $lineUps", lineUps.distinct().size > 1)
     }
 
     @Test

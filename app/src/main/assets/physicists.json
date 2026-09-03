@@ -1,0 +1,52 @@
+[
+  {
+    "id": "einstein",
+    "name": "Albert Einstein",
+    "shortName": "Einstein"
+  },
+  {
+    "id": "newton",
+    "name": "Isaac Newton",
+    "shortName": "Newton"
+  },
+  {
+    "id": "curie",
+    "name": "Marie Curie",
+    "shortName": "Curie"
+  },
+  {
+    "id": "galileo",
+    "name": "Galileo Galilei",
+    "shortName": "Galileo"
+  },
+  {
+    "id": "tesla",
+    "name": "Nikola Tesla",
+    "shortName": "Tesla"
+  },
+  {
+    "id": "bohr",
+    "name": "Niels Bohr",
+    "shortName": "Bohr"
+  },
+  {
+    "id": "faraday",
+    "name": "Michael Faraday",
+    "shortName": "Faraday"
+  },
+  {
+    "id": "maxwell",
+    "name": "James Clerk Maxwell",
+    "shortName": "Maxwell"
+  },
+  {
+    "id": "planck",
+    "name": "Max Planck",
+    "shortName": "Planck"
+  },
+  {
+    "id": "kepler",
+    "name": "Johannes Kepler",
+    "shortName": "Kepler"
+  }
+]

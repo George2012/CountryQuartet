@@ -222,6 +222,7 @@ private fun ScoreBoard(
                     ) {
                         PlayerAvatar(
                             isHuman = player.isHuman,
+                            playerId = player.id,
                             seatIndex = seatIndex,
                             isCurrent = player.isCurrent,
                             modifier = Modifier.padding(bottom = 4.dp),

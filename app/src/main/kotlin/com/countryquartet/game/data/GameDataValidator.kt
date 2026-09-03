@@ -2,6 +2,7 @@ package com.countryquartet.game.data
 
 import com.countryquartet.game.model.Country
 import com.countryquartet.game.model.GameData
+import com.countryquartet.game.model.Physicist
 import com.countryquartet.game.model.Quartet
 
 /**
@@ -16,6 +17,10 @@ object GameDataValidator {
     const val EXPECTED_COUNTRY_COUNT = 52
     const val EXPECTED_QUARTET_COUNT = 13
     const val COUNTRIES_PER_QUARTET = 4
+
+    /** The roster the three computer players are drawn from. */
+    const val EXPECTED_PHYSICIST_COUNT = 10
+    const val OPPONENTS_PER_GAME = 3
 
     /**
      * Validates the dataset and returns it as [GameData].
@@ -88,6 +93,43 @@ object GameDataValidator {
                 else -> problems += "country ${country.id} claims quartet ${country.quartetId} " +
                     "but is listed by ${owners.joinToString()}"
             }
+        }
+
+        return problems
+    }
+
+    /**
+     * Validates the roster the computer players are drawn from.
+     *
+     * @throws GameDataException if any rule is broken.
+     */
+    fun requireValidPhysicists(physicists: List<Physicist>): List<Physicist> {
+        val problems = validatePhysicists(physicists)
+        if (problems.isNotEmpty()) {
+            throw GameDataException(
+                "Invalid physicist data:" + problems.joinToString(separator = "") { "\n - $it" },
+            )
+        }
+        return physicists
+    }
+
+    /** Every rule violation found in the roster, empty when it is valid. */
+    fun validatePhysicists(physicists: List<Physicist>): List<String> {
+        val problems = mutableListOf<String>()
+
+        if (physicists.size != EXPECTED_PHYSICIST_COUNT) {
+            problems += "expected $EXPECTED_PHYSICIST_COUNT physicists but found ${physicists.size}"
+        }
+        // A game seats three of them, so a short roster would make dealing impossible.
+        if (physicists.size < OPPONENTS_PER_GAME) {
+            problems += "a game needs at least $OPPONENTS_PER_GAME physicists to seat"
+        }
+        duplicatesOf(physicists.map { it.id }).forEach { problems += "duplicate physicist id: $it" }
+        duplicatesOf(physicists.map { it.name }).forEach {
+            problems += "duplicate physicist name: $it"
+        }
+        duplicatesOf(physicists.map { it.shortName }).forEach {
+            problems += "duplicate physicist short name: $it"
         }
 
         return problems

@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun PlayerAvatar(
     isHuman: Boolean,
+    playerId: String,
     seatIndex: Int,
     isCurrent: Boolean,
     modifier: Modifier = Modifier,
@@ -49,9 +50,14 @@ fun PlayerAvatar(
             .background(seatColor(seatIndex)),
         contentAlignment = Alignment.Center,
     ) {
-        val tint = MaterialTheme.colorScheme.onSurface
-        val glyphModifier = Modifier.size(AVATAR_SIZE * 0.6f)
-        if (isHuman) PersonGlyph(tint, glyphModifier) else RobotGlyph(tint, glyphModifier)
+        val glyphModifier = Modifier.size(AVATAR_SIZE * 0.68f)
+        val face = if (isHuman) null else PhysicistFace.forPlayerId(playerId)
+        when {
+            isHuman -> Canvas(modifier = glyphModifier) { plainFace() }
+            face != null -> PhysicistGlyph(face, glyphModifier)
+            // An opponent who is not on the roster still needs a face.
+            else -> RobotGlyph(MaterialTheme.colorScheme.onSurface, glyphModifier)
+        }
     }
 }
 
@@ -69,26 +75,9 @@ private fun seatColor(seatIndex: Int): Color {
 
 private val AVATAR_SIZE = 40.dp
 
-// The two glyphs below are deliberately simple shapes rather than an icon
-// library: at 40dp they only need to read as "a person" or "a robot" next to
-// each other, not stand alone as art.
-
-@Composable
-private fun PersonGlyph(tint: Color, modifier: Modifier = Modifier) {
-    Canvas(modifier = modifier) {
-        val w = size.width
-        val h = size.height
-        drawCircle(color = tint, radius = w * 0.2f, center = Offset(w / 2f, h * 0.28f))
-        drawArc(
-            color = tint,
-            startAngle = 180f,
-            sweepAngle = 180f,
-            useCenter = true,
-            topLeft = Offset(w * 0.12f, h * 0.48f),
-            size = Size(w * 0.76f, h * 0.62f),
-        )
-    }
-}
+// The glyph below is a deliberately simple shape rather than an icon library:
+// at 40dp it only needs to read as "a robot" beside the faces, not stand alone
+// as art. It is the fallback for an opponent who is not on the roster.
 
 @Composable
 private fun RobotGlyph(tint: Color, modifier: Modifier = Modifier) {

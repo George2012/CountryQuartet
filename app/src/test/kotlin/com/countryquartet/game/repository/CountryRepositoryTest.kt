@@ -65,6 +65,7 @@ class CountryRepositoryTest {
         val truncated = object : GameDataSource {
             override fun readCountriesJson(): String = "[]"
             override fun readQuartetsJson(): String = AssetFiles.readQuartetsJson()
+            override fun readPhysicistsJson(): String = AssetFiles.readPhysicistsJson()
         }
         val error = assertThrows(GameDataException::class.java) {
             CountryRepository(truncated).gameData()
@@ -82,5 +83,7 @@ class CountryRepositoryTest {
         }
 
         override fun readQuartetsJson(): String = delegate.readQuartetsJson()
+
+        override fun readPhysicistsJson(): String = delegate.readPhysicistsJson()
     }
 }

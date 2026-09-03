@@ -16,6 +16,8 @@ class AssetGameDataSource(context: Context) : GameDataSource {
 
     override fun readQuartetsJson(): String = read(QUARTETS_ASSET)
 
+    override fun readPhysicistsJson(): String = read(PHYSICISTS_ASSET)
+
     private fun read(name: String): String = try {
         assets.open(name).bufferedReader().use { it.readText() }
     } catch (e: IOException) {
@@ -25,5 +27,6 @@ class AssetGameDataSource(context: Context) : GameDataSource {
     companion object {
         const val COUNTRIES_ASSET = "countries.json"
         const val QUARTETS_ASSET = "quartets.json"
+        const val PHYSICISTS_ASSET = "physicists.json"
     }
 }

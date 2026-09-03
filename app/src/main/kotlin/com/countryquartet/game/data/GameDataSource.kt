@@ -9,4 +9,7 @@ package com.countryquartet.game.data
 interface GameDataSource {
     fun readCountriesJson(): String
     fun readQuartetsJson(): String
+
+    /** The computer players who can take a seat. */
+    fun readPhysicistsJson(): String
 }

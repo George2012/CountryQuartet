@@ -12,6 +12,7 @@ import com.countryquartet.game.ai.BasicAi
 import com.countryquartet.game.data.AssetGameDataSource
 import com.countryquartet.game.game.CardRequest
 import com.countryquartet.game.game.GameEngine
+import com.countryquartet.game.game.PlayerSeat
 import com.countryquartet.game.game.RegionOutcome
 import com.countryquartet.game.game.RequestOutcome
 import com.countryquartet.game.model.GameData
@@ -126,7 +127,7 @@ class GameViewModel(
                 gameData = repository.gameData()
                 engine = GameEngine(gameData)
             }
-            game = engine.newGame(random = random)
+            game = engine.newGame(seats = drawSeats(), random = random)
             publish()
             continueWithAi()
         } catch (e: Exception) {
@@ -339,6 +340,21 @@ class GameViewModel(
         publish()
     }
 
+    /**
+     * The table for one game: the human, then three physicists drawn from the
+     * roster, so the opponents differ from game to game.
+     *
+     * The score board only has a quarter of the screen per player, so the seats
+     * are named with the short name.
+     */
+    private fun drawSeats(): List<PlayerSeat> {
+        val opponents = repository.physicists()
+            .shuffled(random)
+            .take(GameEngine.PLAYER_COUNT - 1)
+            .map { PlayerSeat(id = it.id, name = it.shortName, isHuman = false) }
+        return listOf(PlayerSeat(GameEngine.HUMAN_ID, HUMAN_NAME, isHuman = true)) + opponents
+    }
+
     /** Drops what the computer player in the middle of a turn was doing. */
     private fun forgetAiTurn() {
         confirmedThisTurn.clear()
@@ -452,6 +468,9 @@ class GameViewModel(
     companion object {
         /** Short pause so the human can follow the computer turns. */
         const val AI_TURN_DELAY_MS = 900L
+
+        /** What the human's own seat is called on the score board. */
+        const val HUMAN_NAME = "You"
 
         fun factory(context: Context): ViewModelProvider.Factory {
             val appContext = context.applicationContext

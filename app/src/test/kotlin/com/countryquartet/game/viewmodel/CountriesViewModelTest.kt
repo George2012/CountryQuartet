@@ -44,6 +44,7 @@ class CountriesViewModelTest {
         val broken = object : GameDataSource {
             override fun readCountriesJson(): String = "[]"
             override fun readQuartetsJson(): String = AssetFiles.readQuartetsJson()
+            override fun readPhysicistsJson(): String = AssetFiles.readPhysicistsJson()
         }
 
         val viewModel = CountriesViewModel(CountryRepository(broken))

@@ -1,6 +1,7 @@
 package com.countryquartet.game.data
 
 import com.countryquartet.game.model.Country
+import com.countryquartet.game.model.Physicist
 import com.countryquartet.game.model.Quartet
 import org.json.JSONArray
 import org.json.JSONException
@@ -36,6 +37,14 @@ object GameDataParser {
             id = entry.requireString("id", "quartet"),
             name = entry.requireString("name", "quartet"),
             countryIds = entry.requireStringList("countryIds", "quartet"),
+        )
+    }
+
+    fun parsePhysicists(json: String): List<Physicist> = parseArray(json, "physicist") { entry ->
+        Physicist(
+            id = entry.requireString("id", "physicist"),
+            name = entry.requireString("name", "physicist"),
+            shortName = entry.requireString("shortName", "physicist"),
         )
     }
 
