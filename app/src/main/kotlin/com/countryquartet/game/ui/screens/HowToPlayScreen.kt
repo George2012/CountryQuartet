@@ -27,6 +27,7 @@ import com.countryquartet.game.R
 import com.countryquartet.game.ui.components.CountryFlag
 import com.countryquartet.game.ui.components.ScreenScaffold
 import com.countryquartet.game.ui.theme.CountryQuartetTheme
+import com.countryquartet.game.ui.theme.quartetBackground
 
 /** The five steps of a turn, in the order a new player meets them. */
 private data class HowToStep(val titleRes: Int, val bodyRes: Int)
@@ -40,6 +41,7 @@ private val steps = listOf(
 )
 
 /** The four Nordic countries, used as the worked example. */
+private const val EXAMPLE_QUARTET_ID = "nordic_countries"
 private val exampleCountries = listOf("se" to "Sweden", "no" to "Norway", "dk" to "Denmark", "fi" to "Finland")
 
 @Composable
@@ -79,13 +81,16 @@ fun HowToPlayScreen(
     }
 }
 
-/** Shows a real quartet, so "a group of four" is concrete before the rules start. */
+/** Shows a real quartet, so "a region of four" is concrete before the rules start. */
 @Composable
 private fun ExampleQuartet() {
     Card(
         modifier = Modifier.fillMaxWidth(),
+        // The region's own colour, not a generic accent: the example names
+        // Nordic Countries, and the player will meet that same colour in their
+        // hand a moment later.
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+            containerColor = quartetBackground(EXAMPLE_QUARTET_ID),
         ),
     ) {
         Column(
