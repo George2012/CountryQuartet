@@ -697,6 +697,26 @@ class GameViewModelTest {
     }
 
     @Test
+    fun `taking the card says which card it was`() = runTest {
+        val viewModel = newViewModel(autoPlay = false)
+        advanceUntilIdle()
+        playUntilCardOwed(viewModel)
+        val handBefore = viewModel.playing.hand.flatMap { it.owned }.map { it.id }
+
+        viewModel.takeCard()
+
+        val taken = viewModel.playing.message
+        assertTrue("$taken should name the card taken", taken is GameMessage.CardTaken)
+        val country = (taken as GameMessage.CardTaken).country
+        assertFalse("the card named has to be a new one", country.id in handBefore)
+        // And it is the card that actually arrived, not just any name.
+        val handAfter = viewModel.playing.hand.flatMap { it.owned }.map { it.id } +
+            viewModel.playing.humanCompletedQuartets.flatMap { entry -> entry.countries.map { it.id } }
+        assertTrue("${country.id} should now be held", country.id in handAfter)
+        assertTrue("the record is kept", viewModel.playing.history.contains(taken))
+    }
+
+    @Test
     fun `the computer players wait until the card has been taken`() = runTest {
         val viewModel = newViewModel(autoPlay = false)
         advanceUntilIdle()

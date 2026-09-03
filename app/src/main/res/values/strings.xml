@@ -35,6 +35,10 @@
     <string name="game_your_turn_banner">Your turn — ask for a card!</string>
     <string name="game_take">TAKE</string>
     <string name="game_take_banner">Turn over — take a card!</string>
+    <string name="game_msg_took">You took %1$s from the deck.</string>
+    <string name="game_took_banner">You took this card:</string>
+    <string name="history_took">You took a card</string>
+    <string name="history_from_deck">From the deck</string>
     <string name="game_msg_received">%1$s got %3$s from %2$s.</string>
     <string name="game_msg_received_by_you">You got %2$s from %1$s.</string>
     <string name="game_msg_received_from_you">%1$s took %2$s from you.</string>

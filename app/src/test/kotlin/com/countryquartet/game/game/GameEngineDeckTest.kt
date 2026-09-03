@@ -25,6 +25,27 @@ class GameEngineDeckTest {
     }
 
     @Test
+    fun `a failed request names the card it took off the pile`() {
+        val state = TestGame.stateOf(
+            listOf("se"), listOf("es"), listOf("de"), listOf("jp"),
+            deck = listOf("no", "dk"),
+        )
+
+        val outcome = engine.ask(state, "p1", "no").outcome as RequestOutcome.Failure
+
+        assertEquals("no", outcome.drewCountryId)
+    }
+
+    @Test
+    fun `nothing is named when the pile is empty`() {
+        val state = TestGame.stateOf(listOf("se"), listOf("es"), listOf("de"), listOf("jp"))
+
+        val outcome = engine.ask(state, "p1", "no").outcome as RequestOutcome.Failure
+
+        assertEquals(null, outcome.drewCountryId)
+    }
+
+    @Test
     fun `a failed request still ends the turn`() {
         val state = TestGame.stateOf(
             listOf("se"), listOf("es"), listOf("de"), listOf("jp"),

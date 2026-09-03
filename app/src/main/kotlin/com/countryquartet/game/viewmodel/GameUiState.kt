@@ -79,6 +79,12 @@ sealed interface GameMessage {
         val targetIsHuman: Boolean,
     ) : GameMessage
 
+    /**
+     * The human took the card their lost turn paid out. Carries the whole
+     * country so the card itself can be shown: which one it was is the point.
+     */
+    data class CardTaken(val country: Country) : GameMessage
+
     data class QuartetCompleted(
         val playerName: String,
         val targetName: String,
@@ -157,6 +163,10 @@ sealed interface GameUiState {
         /** The quartet just completed, while its banner should be on screen. */
         val justCompletedQuartet: GameMessage.QuartetCompleted?
             get() = message as? GameMessage.QuartetCompleted
+
+        /** The card just taken off the pile, while its banner should be on screen. */
+        val justTookCard: GameMessage.CardTaken?
+            get() = message as? GameMessage.CardTaken
 
         /** True when more than one player shares the top score. */
         val isDraw: Boolean get() = isFinished && winnerNames.size > 1

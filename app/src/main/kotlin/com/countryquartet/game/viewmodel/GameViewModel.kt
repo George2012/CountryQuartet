@@ -94,6 +94,9 @@ class GameViewModel(
      */
     private var pendingTake: GameState? = null
 
+    /** The card [pendingTake] owes, so taking it can say which one it was. */
+    private var pendingTakeCard: String? = null
+
     /** Guards against counting the same finished game more than once. */
     private var finishRecorded = false
 
@@ -116,6 +119,7 @@ class GameViewModel(
         // Every game starts stepped: auto play is a choice made per game.
         autoPlay = false
         pendingTake = null
+        pendingTakeCard = null
         forgetAiTurn()
         try {
             if (!::gameData.isInitialized) {
@@ -175,7 +179,7 @@ class GameViewModel(
             )
             is RegionOutcome.Absent -> Selection()
         }
-        awaitTake((result.outcome as? RegionOutcome.Absent)?.drewFromDeck == true, current)
+        awaitTake((result.outcome as? RegionOutcome.Absent)?.drewCountryId, current)
         forgetAiTurn()
         publish()
         continueWithAi()
@@ -208,7 +212,7 @@ class GameViewModel(
             )
             is RequestOutcome.Failure -> Selection()
         }
-        awaitTake((result.outcome as? RequestOutcome.Failure)?.drewFromDeck == true, current)
+        awaitTake((result.outcome as? RequestOutcome.Failure)?.drewCountryId, current)
         forgetAiTurn()
         publish()
         continueWithAi()
@@ -232,16 +236,22 @@ class GameViewModel(
     fun takeCard() {
         if (pendingTake == null) return
         pendingTake = null
+        // Named as it is handed over: a card that simply appeared in the hand
+        // would leave the player guessing which one is new.
+        pendingTakeCard?.let { record(GameMessage.CardTaken(gameData.country(it))) }
+        pendingTakeCard = null
         publish()
         continueWithAi()
     }
 
     /**
-     * Keeps [before] on screen while the human is owed a card, so it is theirs
-     * only once they take it.
+     * Keeps [before] on screen while the human is owed [drewCountryId], so the
+     * card is theirs only once they take it.
      */
-    private fun awaitTake(drewFromDeck: Boolean, before: GameState) {
-        if (!autoPlay && drewFromDeck) pendingTake = before
+    private fun awaitTake(drewCountryId: String?, before: GameState) {
+        if (autoPlay || drewCountryId == null) return
+        pendingTake = before
+        pendingTakeCard = drewCountryId
     }
 
     /**
@@ -256,6 +266,7 @@ class GameViewModel(
         if (enabled) {
             // Auto play does not stop for a card: anything owed is taken now.
             pendingTake = null
+            pendingTakeCard = null
             continueWithAi()
         } else {
             aiTurns?.cancel()

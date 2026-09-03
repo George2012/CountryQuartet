@@ -151,6 +151,7 @@ private fun GameContent(
         )
         StatusLine(state, onHistoryClick = { showHistory = true }, onTakeCard = onTakeCard)
         TurnControls(state = state, onNext = onNext, onToggleAuto = onToggleAuto)
+        TakenCardBanner(state.justTookCard)
         QuartetCompletedBanner(state.justCompletedQuartet)
 
         if (state.isFinished) {
@@ -433,6 +434,7 @@ private fun messageColor(message: GameMessage): Color = when (message) {
     is GameMessage.CardRefused -> MaterialTheme.colorScheme.error
     is GameMessage.RegionAbsent -> MaterialTheme.colorScheme.error
     is GameMessage.QuartetCompleted -> MaterialTheme.colorScheme.primary
+    is GameMessage.CardTaken -> MaterialTheme.colorScheme.primary
     is GameMessage.CardReceived -> MaterialTheme.colorScheme.onSurfaceVariant
     is GameMessage.RegionPresent -> MaterialTheme.colorScheme.onSurfaceVariant
 }
@@ -536,6 +538,13 @@ private fun historyLines(message: GameMessage): Triple<String, String, String> =
         stringResource(R.string.history_about_country, message.countryName),
         stringResource(R.string.history_result_quartet, message.quartet.name),
     )
+    // Nobody was asked for this one, so the middle line names where it came
+    // from instead of what was asked about.
+    is GameMessage.CardTaken -> Triple(
+        stringResource(R.string.history_took),
+        stringResource(R.string.history_from_deck),
+        message.country.name,
+    )
 }
 
 /** "You asked X" / "X asked you" / "X asked Y" - whichever side of the ask is human, if either. */
@@ -593,6 +602,7 @@ private fun messageText(message: GameMessage): String = when (message) {
         message.playerName,
         message.quartet.name,
     )
+    is GameMessage.CardTaken -> stringResource(R.string.game_msg_took, message.country.name)
 }
 
 @Composable
@@ -812,6 +822,59 @@ private fun GameOverPanel(
 private fun GameScreenPreview() {
     CountryQuartetTheme {
         CenteredMessage(stringResource(R.string.game_loading), PaddingValues(0.dp))
+    }
+}
+
+/**
+ * The card just taken off the pile, held up for a moment.
+ *
+ * A card that only appeared somewhere in a hand sorted by quartet would leave
+ * the player hunting for what was new, so the card itself is shown.
+ */
+@Composable
+private fun TakenCardBanner(taken: GameMessage.CardTaken?) {
+    val animate = LocalAnimationsEnabled.current
+    var shown by remember { mutableStateOf<GameMessage.CardTaken?>(null) }
+
+    LaunchedEffect(taken) {
+        shown = taken
+        if (taken != null) {
+            kotlinx.coroutines.delay(Motion.BANNER_MS)
+            shown = null
+        }
+    }
+
+    AnimatedVisibility(
+        visible = shown != null,
+        enter = if (animate) {
+            fadeIn(tween(Motion.ENTER_MS)) + scaleIn(tween(Motion.ENTER_MS), initialScale = 0.85f)
+        } else {
+            EnterTransition.None
+        },
+        exit = if (animate) {
+            fadeOut(tween(Motion.QUICK_MS)) + scaleOut(tween(Motion.QUICK_MS), targetScale = 0.95f)
+        } else {
+            ExitTransition.None
+        },
+    ) {
+        shown?.let { banner ->
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = stringResource(R.string.game_took_banner),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+                CompactCountryCard(
+                    countryId = banner.country.id,
+                    name = banner.country.name,
+                    capital = banner.country.capital,
+                    state = CardState.Selected,
+                )
+            }
+        }
     }
 }
 

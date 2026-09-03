@@ -76,7 +76,9 @@ class GameEngine(
                     askingPlayerId = asking.id,
                     targetPlayerId = target.id,
                     countryId = countryId,
-                    drewFromDeck = afterDraw.deckCount < state.deckCount,
+                    // The top of the pile is what drawCard just took, and is
+                    // null on exactly the turns where the pile was empty.
+                    drewCountryId = state.deck.firstOrNull(),
                 ),
             )
         }
@@ -127,7 +129,7 @@ class GameEngine(
                     askingPlayerId = asking.id,
                     targetPlayerId = target.id,
                     quartetId = quartetId,
-                    drewFromDeck = afterDraw.deckCount < state.deckCount,
+                    drewCountryId = state.deck.firstOrNull(),
                 ),
             )
         }

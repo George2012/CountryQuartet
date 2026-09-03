@@ -37,14 +37,19 @@ sealed interface RequestOutcome {
     /**
      * The opponent did not have the card, so the turn moves on.
      *
-     * [drewFromDeck] is false once the draw pile has run out.
+     * [drewCountryId] is the card the lost turn paid out, or null once the
+     * draw pile has run out.
      */
     data class Failure(
         override val askingPlayerId: String,
         override val targetPlayerId: String,
         override val countryId: String,
-        val drewFromDeck: Boolean = false,
-    ) : RequestOutcome
+        val drewCountryId: String? = null,
+    ) : RequestOutcome {
+
+        /** Whether the pile still had a card to pay the lost turn with. */
+        val drewFromDeck: Boolean get() = drewCountryId != null
+    }
 }
 
 /** The state after a move together with what the move did, for UI feedback. */
@@ -77,14 +82,19 @@ sealed interface RegionOutcome {
      * The opponent holds none of the quartet, so the turn moves on - exactly
      * like a failed card request.
      *
-     * [drewFromDeck] is false once the draw pile has run out.
+     * [drewCountryId] is the card the lost turn paid out, or null once the
+     * draw pile has run out.
      */
     data class Absent(
         override val askingPlayerId: String,
         override val targetPlayerId: String,
         override val quartetId: String,
-        val drewFromDeck: Boolean = false,
-    ) : RegionOutcome
+        val drewCountryId: String? = null,
+    ) : RegionOutcome {
+
+        /** Whether the pile still had a card to pay the lost turn with. */
+        val drewFromDeck: Boolean get() = drewCountryId != null
+    }
 }
 
 /** The state after a region check together with what it revealed. */
