@@ -5,6 +5,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.ReadOnlyComposable
+import androidx.compose.ui.graphics.Color
 
 private val LightColors = lightColorScheme(
     primary = LightPrimary,
@@ -57,6 +59,11 @@ private val DarkColors = darkColorScheme(
     errorContainer = DarkErrorContainer,
     onErrorContainer = DarkOnErrorContainer,
 )
+
+/** The green half of the good/bad pair, for the theme in use. */
+@Composable
+@ReadOnlyComposable
+fun goodColor(): Color = if (isSystemInDarkTheme()) DarkGood else LightGood
 
 /**
  * Applies the Country Quartet brand theme.

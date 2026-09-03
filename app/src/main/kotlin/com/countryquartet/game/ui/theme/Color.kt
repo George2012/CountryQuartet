@@ -13,6 +13,17 @@ import androidx.compose.ui.graphics.Color
 /** The number of cards left, written on the face down deck. */
 internal val DeckCountGreen = Color(0xFF7BE8A4)
 
+/**
+ * A turn that went the player's way.
+ *
+ * Material 3 has no success role, so the game names its own. The red half of
+ * the pair is colorScheme.error, which already exists. Both are darker than
+ * the brand green so they stay readable as *text* on the history card's
+ * surfaceVariant, which is the tightest background either lands on.
+ */
+internal val LightGood = Color(0xFF186B3B)
+internal val DarkGood = Color(0xFF99D4AD)
+
 // Light
 internal val LightPrimary = Color(0xFF1B5E9E)
 internal val LightOnPrimary = Color(0xFFFFFFFF)

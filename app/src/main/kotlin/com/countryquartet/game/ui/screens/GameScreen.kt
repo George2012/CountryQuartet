@@ -64,6 +64,7 @@ import com.countryquartet.game.ui.components.Motion
 import com.countryquartet.game.ui.components.PlayerAvatar
 import com.countryquartet.game.ui.components.ScreenScaffold
 import com.countryquartet.game.ui.theme.CountryQuartetTheme
+import com.countryquartet.game.ui.theme.goodColor
 import com.countryquartet.game.ui.theme.quartetBackground
 import com.countryquartet.game.viewmodel.GameMessage
 import com.countryquartet.game.viewmodel.GameUiState
@@ -431,13 +432,30 @@ private fun StatusText(
 
 /** The colour a message is shown in, wherever it appears - the status line or the history list. */
 @Composable
-private fun messageColor(message: GameMessage): Color = when (message) {
-    is GameMessage.CardRefused -> MaterialTheme.colorScheme.error
-    is GameMessage.RegionAbsent -> MaterialTheme.colorScheme.error
-    is GameMessage.QuartetCompleted -> MaterialTheme.colorScheme.primary
-    is GameMessage.CardTaken -> MaterialTheme.colorScheme.primary
-    is GameMessage.CardReceived -> MaterialTheme.colorScheme.onSurfaceVariant
-    is GameMessage.RegionPresent -> MaterialTheme.colorScheme.onSurfaceVariant
+private fun messageColor(message: GameMessage): Color =
+    if (message.isGoodForHuman()) goodColor() else MaterialTheme.colorScheme.error
+
+/**
+ * Did this go the human player's way?
+ *
+ * Judged from the human's seat rather than the acting player's, because that
+ * is the seat reading the message: a computer losing its turn is good news
+ * even though nothing of the player's moved, and a computer winning a card off
+ * another computer is bad news for the same reason.
+ */
+internal fun GameMessage.isGoodForHuman(): Boolean = when (this) {
+    // An ask that worked is good for whoever asked, so it is good news here
+    // only when the human was the one asking.
+    is GameMessage.CardReceived -> askerIsHuman
+    is GameMessage.RegionPresent -> askerIsHuman
+    is GameMessage.QuartetCompleted -> askerIsHuman
+    // An ask that failed ends the asker's turn, which is good for everyone
+    // else at the table - the human included, whoever was asking.
+    is GameMessage.CardRefused -> !askerIsHuman
+    is GameMessage.RegionAbsent -> !askerIsHuman
+    // The card a lost turn pays out. The turn was already lost and reported
+    // as such; this message is the card you gained for it.
+    is GameMessage.CardTaken -> true
 }
 
 /**
