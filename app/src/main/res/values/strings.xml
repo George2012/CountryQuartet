@@ -97,6 +97,11 @@
     <string name="countries_intro">All 13 quartets and 52 countries. Tap a country to see its card.</string>
 
     <!-- Settings screen -->
+    <!--
+      The sound strings are unused: the switch was pulled from the screen
+      because the game has no sounds yet. Kept, with the setting behind them,
+      so the row returns unchanged when there is something to mute.
+    -->
     <string name="settings_sound">Sound</string>
     <string name="settings_sound_hint">Play game sounds.</string>
     <string name="settings_animations">Animations</string>
@@ -118,14 +123,14 @@
 
     <!-- How to play -->
     <string name="howto_intro">Four players. Thirteen regions of four countries. Collect the most regions to win!</string>
-    <string name="howto_step1_title">You get 13 cards</string>
+    <string name="howto_step1_title">You get %1$d cards</string>
     <string name="howto_step1_body">Every card is a country, with its flag, capital city, language and money.</string>
     <string name="howto_step2_title">Every country is in a region of 4</string>
     <string name="howto_step2_body">Sweden, Norway, Denmark and Finland make the Nordic Countries region. Your cards are sorted into regions for you.</string>
     <string name="howto_step3_title">Ask another player for a card</string>
     <string name="howto_step3_body">Pick a region you have started, choose a country you still need, and ask one player for it.</string>
     <string name="howto_step4_title">Right guess? Go again</string>
-    <string name="howto_step4_body">If they have the card, you take it and keep your turn. If they do not, the next player has a turn.</string>
+    <string name="howto_step4_body">If they have the card, you take it and keep your turn. If they do not, you take one card from the deck and the next player has a turn.</string>
     <string name="howto_step5_title">Collect all 4 to score</string>
     <string name="howto_step5_body">A full region of four is a quartet and scores 1 point. There are 13 to win.</string>
     <string name="howto_example">Example region</string>

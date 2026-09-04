@@ -24,16 +24,31 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.countryquartet.game.R
+import com.countryquartet.game.game.GameEngine
 import com.countryquartet.game.ui.components.CountryFlag
 import com.countryquartet.game.ui.components.ScreenScaffold
 import com.countryquartet.game.ui.theme.CountryQuartetTheme
 import com.countryquartet.game.ui.theme.quartetBackground
 
-/** The five steps of a turn, in the order a new player meets them. */
-private data class HowToStep(val titleRes: Int, val bodyRes: Int)
+/**
+ * The five steps of a turn, in the order a new player meets them.
+ *
+ * [titleArgs] lets a step quote a number the engine owns rather than repeating
+ * it in the string. The hand size shipped as a hardcoded "13" here while the
+ * engine dealt six, so the rules screen taught the wrong game.
+ */
+private data class HowToStep(
+    val titleRes: Int,
+    val bodyRes: Int,
+    val titleArgs: List<Any> = emptyList(),
+)
 
 private val steps = listOf(
-    HowToStep(R.string.howto_step1_title, R.string.howto_step1_body),
+    HowToStep(
+        R.string.howto_step1_title,
+        R.string.howto_step1_body,
+        titleArgs = listOf(GameEngine.DEFAULT_CARDS_PER_PLAYER),
+    ),
     HowToStep(R.string.howto_step2_title, R.string.howto_step2_body),
     HowToStep(R.string.howto_step3_title, R.string.howto_step3_body),
     HowToStep(R.string.howto_step4_title, R.string.howto_step4_body),
@@ -135,7 +150,7 @@ private fun StepRow(number: Int, step: HowToStep) {
         }
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = stringResource(step.titleRes),
+                text = stringResource(step.titleRes, *step.titleArgs.toTypedArray()),
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold,
             )

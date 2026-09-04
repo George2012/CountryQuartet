@@ -59,12 +59,10 @@ fun SettingsScreen(
                 .padding(horizontal = 20.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
-            SettingRow(
-                title = stringResource(R.string.settings_sound),
-                description = stringResource(R.string.settings_sound_hint),
-                checked = settings.soundEnabled,
-                onCheckedChange = viewModel::setSoundEnabled,
-            )
+            // There is no Sound row because the game plays no sounds. A switch
+            // that changes nothing is worse than no switch. The setting is still
+            // stored and honoured by the repository, so the row can come back
+            // unchanged on the day there is something to mute.
             SettingRow(
                 title = stringResource(R.string.settings_animations),
                 description = stringResource(R.string.settings_animations_hint),
