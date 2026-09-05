@@ -46,5 +46,4 @@ updated before that version is published, and the change will be described here.
 
 ## Contact
 
-Questions about this policy: TODO — add the public contact address before
-publishing.
+Questions about this policy: george.pliner@gmail.com

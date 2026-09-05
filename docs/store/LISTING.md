@@ -13,9 +13,9 @@ against Google's limits, checked at the time of writing.
 | Application type | Game |
 | Category | Educational |
 | Tags | Education, Card, Family, Casual |
-| Contact email | **TODO — decide before upload.** Play shows this publicly on the listing. A dedicated address such as `support@…` is worth setting up rather than a personal inbox. |
+| Contact email | `george.pliner@gmail.com` (shown publicly on the listing) |
 | Website | Optional. Leave blank unless one exists. |
-| Privacy policy URL | **TODO — must be a live URL.** Text is ready in `PRIVACY.md`; host it (GitHub Pages works) and paste the link. |
+| Privacy policy URL | `https://george2012.github.io/CountryQuartet/privacy.html` (GitHub Pages, served from `docs/`) |
 
 ## Short description (80 max)
 
