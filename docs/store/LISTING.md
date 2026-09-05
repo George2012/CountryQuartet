@@ -15,7 +15,7 @@ against Google's limits, checked at the time of writing.
 | Tags | Education, Card, Family, Casual |
 | Contact email | `george.pliner@gmail.com` (shown publicly on the listing) |
 | Website | Optional. Leave blank unless one exists. |
-| Privacy policy URL | `https://george2012.github.io/CountryQuartet/privacy.html` (GitHub Pages, served from `docs/`) |
+| Privacy policy URL | `https://github.com/George2012/CountryQuartet/blob/main/docs/store/PRIVACY.md` — live now, because the repo is public. `docs/privacy.html` is ready to serve from GitHub Pages at `https://george2012.github.io/CountryQuartet/privacy.html`; switch to that once Pages is enabled. |
 
 ## Short description (80 max)
 
